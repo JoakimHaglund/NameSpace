@@ -1,0 +1,6 @@
+@NameSpace_HostAddress = http://localhost:5228
+
+GET {{NameSpace_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
