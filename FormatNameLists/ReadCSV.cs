@@ -21,6 +21,7 @@ namespace FormatNameLists
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("No Path was provided");
             Path = path;
         }
+        #region Setters
         public ReadCSV HasHeader()
         {
             HasHeaderRow = true;
@@ -36,6 +37,7 @@ namespace FormatNameLists
             Delimitors = delimitor;
             return this;
         }
+        #endregion
         public List<T> ReadAsClass<T>() where T : class
         {
             List<T> result = [];
