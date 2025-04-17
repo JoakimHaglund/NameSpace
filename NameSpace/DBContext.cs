@@ -14,7 +14,6 @@ namespace NameSpace
 
         public DbSet<User> Users { get; set; } // Användarnas tabell
         public DbSet<NameInfo> NameInfos { get; set; }
-
         public DbSet<UserReaction> UserReactions { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
