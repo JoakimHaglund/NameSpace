@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Namespace</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script type="module" src="scripts/main.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Namespace</h1>
+    </header>
+    <div id="app">
+        <p>{{message}}</p>
+        <div id="nameplate-wrapper">
+            <div class="nameplate" v-if="hasData" v-for="(name, index) in names" :key="index"
+            @touchstart="handleSwipe(index, $event)"
+            @touchmove="handleSwipe(index, $event)"
+            @touchend="handleSwipe(index, $event)"
+            :style="{ transform: 'translateX(' + offsetXPerName[index] + 'px)' }">
+                <h1>{{name.name}} {{name.amount}}</h1>
+                <p>{{name.description}}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
