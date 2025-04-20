@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -73,8 +73,29 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
+// LÄGG TILL CORS POLICYN
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://127.0.0.1:5500", "http://192.168.50.9:5500", "https://192.168.50.9:5500") // <-- din frontend-url
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(5228); // HTTP om du vill ha det också
+    serverOptions.ListenAnyIP(7203, listenOptions =>
+    {
+        listenOptions.UseHttps(); // HÄR ÄR DITT HTTPS
+    });
+});
 var app = builder.Build();
+
+app.UseCors("AllowFrontend");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -83,10 +104,22 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
+
+app.UseRouting();
+
+app.Use(async (context, next) =>
+{
+    var token = context.Request.Cookies["auth_token"]; // ⬅️ HÄR ÄR GREJEN
+    if (!string.IsNullOrEmpty(token))
+    {
+        context.Request.Headers.Authorization = $"Bearer {token}";
+    }
+
+    await next();
+});
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapControllers();
