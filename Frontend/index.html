@@ -7,24 +7,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
     <script type="module" src="scripts/main.js" defer></script>
 </head>
 <body>
     <header>
-        <h1>Namespace</h1>
     </header>
     <div id="app">
-        <p>{{message}}</p>
-        <div id="nameplate-wrapper">
-            <div class="nameplate" v-if="hasData" v-for="(name, index) in names" :key="index"
-            @touchstart="handleSwipe(index, $event)"
-            @touchmove="handleSwipe(index, $event)"
-            @touchend="handleSwipe(index, $event)"
-            :style="{ transform: 'translateX(' + offsetXPerName[index] + 'px)' }">
-                <h1>{{name.name}} {{name.amount}}</h1>
-                <p>{{name.description}}</p>
-            </div>
+        <div v-if="isCheckingLogin">
+            <div class="spinner"></div>
+          </div>
+        
+          <div v-else>
+        <div v-if="!isLoggedIn">
+            <h2>Logga in</h2>
+            <form @submit.prevent="login">
+                <input type="text" v-model="email" placeholder="E-post" required />
+                <input type="password" v-model="password" placeholder="Lösenord" required />
+                <button type="submit">Logga in</button>
+            </form>
+            <p v-if="errorMessage">{{ errorMessage }}</p>
         </div>
+        <div id="nameplate-wrapper" v-if="isLoggedIn">
+            <button @click="logout">Logga ut</button>
+            <div class="stack-wrapper">
+                <transition name="nameplate-fade">
+                    <div v-if="previousIndex !== null"
+                         class="nameplate"
+                         :key="'old-' + previousIndex">
+                      <h1>{{ names[previousIndex].name }}</h1>
+                      <p>{{ names[previousIndex].description }}</p>
+                    </div>
+                  </transition>
+                
+                  <!-- Nya kortet, fadar in -->
+                  <transition name="nameplate-fade">
+                    <div v-if="showNameplate" class="nameplate"
+                         :key="'current-' + currentIndex"
+                         @touchstart="handleSwipe"
+                         @touchmove="handleSwipe"
+                         @touchend="handleSwipe"
+                         :style="{
+                           transform: 'translate(' + offsetX + 'px, ' + offsetY + 'px)' +
+                                     ' rotate(' + rotation + 'deg)' +
+                                     ' scale(' + scale + ')',
+                           opacity: opacity
+                         }">
+                      <h1>{{ names[currentIndex].name }}</h1>
+                      <p>{{ names[currentIndex].description }}</p>
+                    </div>
+                  </transition>
+            </div>
+            </div>
+          </div>
     </div>
 </body>
 </html>
