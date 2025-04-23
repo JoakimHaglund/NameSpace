@@ -1,195 +1,360 @@
 import * as api from './api.js';
 
-console.log("hello vue")
-const Direction = Object.freeze({
-  LEFT: 'left',
-  RIGHT: 'right'
-});
+const { watch, ref, computed, onMounted, reactive } = Vue;
+
+console.log("hello vue");
 
 Vue.createApp({
-  data() {
-    return {
-      isCheckingLogin: true, // ny flagga
-      email: '',
-      password: '',
-      errorMessage: '',
+  setup() {
+    // State vars, istället för data() och this
+    const state = reactive({
+      isCheckingLogin: true,
       isLoggedIn: false,
-      names: [],
-      currentIndex: 0,
+      showNameplate: false,
+      showSelector: true,
+      showFavorites: false,
+      display: '',
+      reactionsToAdd: [],
+    });
+    const position = reactive({
       offsetX: 0,
       startX: 0,
       offsetY: 0,
       startY: 0,
-      swipeThreshold: 200,
-      showNameplate: true, // för att hantera visning
+      EDGE_THRESHOLD: 120,
+      SWIPE_THRESHOLD: 200,
+    });
+    const nameplate = reactive({
+      names: [],
+
+      currentIndex: 0,
+      nextIndex: null,
       rotation: 0,
       scale: 1,
-      opacity: 1,
-      previousIndex: null,
-    };
-  },
-  setup() {
-  },
-
-  methods: {
-    logout() {
-      // Här skickar vi en begäran till backend för att logga ut användaren
-      axios.post('http://192.168.50.9:5228/api/Account/logout', {}, {
-        withCredentials: true  // Skicka med cookien om den finns
-      }).then(() => {
-        this.isLoggedIn = false;  // Sätt statusen till icke inloggad
-        // Valfritt: Töm eventuella andra användarrelaterade data som e-post, etc.
-        this.email = '';
-        this.password = '';
-        // Redirect till login-sidan om du vill
-        // window.location.href = '/login';  // Eller använd vue-router
-      }).catch((error) => {
-        console.error("Logout failed:", error);
-      });
-    },
-    async login() {
-      try {
-        const response = await axios.post('http://192.168.50.9:5228/api/Account/login', {
-          username: this.email,
-          password: this.password,
-        },{
-          withCredentials: true, // Detta säkerställer att cookien skickas med i begäran
-        });
-
-        this.isLoggedIn = true;  // Uppdatera status till inloggad
-        if (this.isLoggedIn){
-          this.email = null
-          this.password = null;
-        }
-        this.fetchData(); // Hämta namnplattor
-      } catch (error) {
-        this.errorMessage = 'Fel vid inloggning!';
-        console.error('Login failed:', error);
+      opacity: 1
+    });
+    const nameQuery = reactive({
+      letter: 'k',
+      pagenum: 1,
+    });
+    const lists = reactive({
+      favorites: [],
+      liked: [],
+      disliked: [],
+      hasFetched: {
+        favorites: false,
+        liked: false,
+        disliked: false,
       }
-    },
-    checkLoginStatus() {
-        // Om cookien finns, sätt isLoggedIn till true
-      // Backend kan kontrollera om JWT-token finns i cookien
-      axios.get('http://192.168.50.9:5228/api/Account/check-login', {
-        withCredentials: true,  // Skicka med cookien
-      }).then((response) => {
-        this.isLoggedIn = true;
-      }).catch((error) => {
-        this.isLoggedIn = false;
-      }).finally(() => {    
-        this.isCheckingLogin = false; // vi är klara, visa grejer
-        console.log('isLoggedIn', this.isLoggedIn);
-      });
-    },
+    });
+    const rotation = ref(0);
+    const scale = ref(1);
+    const opacity = ref(1);
 
-    async fetchData(){
+    // Funktioner
+    const fetchData = async (letter, pagenum) => {
       try {
-        // Gör API-anropet här
-        const response = await api.getData('a'); // Byt ut med din API-URL
-        console.log(response); // Sätt datan i din names array
-        this.names = response;
+        const response = await api.getNamesByLetter(letter, pagenum); // Byt ut med din API-URL
+        nameplate.names.push(...response);
+        console.log("HERE: ", nameplate.names); // Sätt datan i din names array
+        state.display = 'nameplate';
       } catch (error) {
         console.error('API-anropet misslyckades:', error);
       }
-    },
-    handleSwipe(event) {
-      if (this.currentIndex < this.names.length - 1) {
-        this.previousIndex = this.currentIndex + 1;
+    };
+
+    const fetchReactions = async (reaction) => {
+      try {
+        const response = await api.getReactions(reaction); // Byt ut med din API-URL
+        if(reaction === 'favorites'){
+          lists.favorites = [...response];
+          lists.hasFetched.favorites = true;
+        }
+        else if (reaction === 'liked'){
+          lists.liked = [...response];
+          lists.hasFetched.liked = true;
+        }
+        else if (reaction === 'disliked'){
+          lists.disliked = [...response];
+          lists.hasFetched.disliked = true;
+        }
+        console.log("HERE: ", nameplate.names); // Sätt datan i din names array
+      } catch (error) {
+        console.error('API-anropet misslyckades:', error);
       }
-      else {
-        this.previousIndex = null;
+    };
+
+    const postReactions = async () => {
+      const response = await api.addReactions(state.reactionsToAdd);
+      console.log("reactionsToAdd: ", response);
+lists.hasFetched.favorites = false;
+      if (response.status === 200) {
+        state.reactionsToAdd = [];
+      } else {
+        state.errorMessage = response;
       }
-      event.preventDefault();
+    };
+    
+    const checkLoginStatus = async () => {
+      try {
+        await axios.get('http://192.168.50.9:5228/api/Account/check-login', {
+          withCredentials: true,
+        });
+        state.isLoggedIn = true;
+        fetchData(nameQuery.letter, nameQuery.pagenum);
+      } catch (error) {
+        state.isLoggedIn = false;
+      } finally {
+        state.isCheckingLogin = false;
+      }
+    };
+
+    const login = async (event) => {
+      const response = await api.loginUser(event.target.email.value, event.target.password.value);
+      console.log("Login: ", response);
+
+      if (response.status === 200) {
+        state.isLoggedIn = true;
+        fetchData(nameQuery.letter, nameQuery.pagenum);
+      } else {
+        state.errorMessage = response;
+      }
+    };
+
+    const logout = () => {
+      axios.post('http://192.168.50.9:5228/api/Account/logout', {}, { withCredentials: true })
+        .then(() => {
+          state.isLoggedIn = false;
+          // window.location.href = '/login';  // eller använd vue-router för redirect
+        }).catch((error) => {
+          console.error("Logout failed:", error);
+        });
+    };
+
+    const handleSwipe = (event) => {
+      if (nameplate.names.length === 0 || nameplate.names[nameplate.currentIndex] === undefined) {
+        console.warn("Ingen data i names ännu eller fel index.");
+        return;
+      }
+      if (nameplate.currentIndex < nameplate.names.length - 1) {
+        nameplate.nextIndex = nameplate.currentIndex + 1;
+      } else {
+        nameplate.nextIndex = null;
+      }
+
       const touch = event.touches?.[0] || event.changedTouches?.[0];
-      console.log('touch event:', event.type);
-      if (event.type === "touchstart") { //TouchEventStarts
-        this.startX = touch.clientX;
-        this.startY = touch.clientY;
-      } else if (event.type === "touchmove") { //Client moves finger
-        this.offsetX = touch.clientX - this.startX;
-        this.offsetY = touch.clientY - this.startY;
-        // Dynamisk rotation (lite sned om man drar i X-led)
-        this.rotation = this.offsetX * 0.01; // Finjustera om du vill
-        // Zoom ut när man swipar
-        this.scale = 1 - Math.min(Math.abs(this.offsetX + this.offsetY), 200) / 1000;
-        // Fade ut lite när man drar
-        this.opacity = 1 - Math.min(Math.abs(this.offsetX + this.offsetY), 200) / 300;
-      } else if (event.type === "touchend") { //Client lifts finger
-        const direction = this.getDirection();
+      //console.log('touch event:', event.type);
+
+      if (event.type === "touchstart") {
+        setStartPos(touch);
+      } else if (event.type === "touchmove") {
+        setOffsetPos(touch);
+        const direction = getDirection();
+        console.log('dir: ', null)
+        if (direction != null && !direction.includes('from')) {
+          setStylingParams();
+        }
+      } else if (event.type === "touchend") {
+        const direction = getDirection();
+        const passedThreshold = reachesThreshold();
         console.log('Swipe direction:', direction);
-        if (direction) {
-          this.triggerSwipe(direction);
+        if (passedThreshold && direction != null) {
+          triggerSwipe(direction);
         }
-        this.offsetX = 0;
-        this.offsetY = 0;
-        this.rotation = 0;
-        this.opacity = 1;
-        this.scale = 1;
+        resetOffset();
+        resetStylingParams();
+      }
+    };
+
+    const getDirection = () => {
+      const { startX, startY, offsetX, offsetY, EDGE_THRESHOLD } = position;
+      const absX = Math.abs(offsetX);
+      const absY = Math.abs(offsetY);
+      //console.log('startX:', startX, 'startY:', startY, 'offsetX:', offsetX, 'offsetY:', offsetY, 'EDGE_THRESHOLD:', EDGE_THRESHOLD);
+
+      const isHorizontal = absX > absY;
+      const xEdgeLeft = startX <= EDGE_THRESHOLD;
+      const xEdgeRight = startX >= window.innerWidth - EDGE_THRESHOLD;
+      const yEdgeTop = startY <= EDGE_THRESHOLD;
+      const yEdgeBottom = startY >= window.innerHeight - EDGE_THRESHOLD;
+      //console.log('isHorizontal:', isHorizontal, 'xEdgeLeft:', xEdgeLeft, 'xEdgeRight:', xEdgeRight, 'yEdgeTop:', yEdgeTop, 'yEdgeBottom:', yEdgeBottom);
+
+      // Om horisontell swipe
+      if (isHorizontal) {
+        if (offsetX < 0) return xEdgeRight ? 'from-right' : 'left';
+        if (offsetX > 0) return xEdgeLeft ? 'from-left' : 'right';
       }
 
-    },
-    getDirection() {
-      console.log('OffsetX:', this.offsetX, 'OffsetY:', this.offsetY);
-      if (Math.abs(this.offsetX) > Math.abs(this.offsetY)) {
-        // Mer drag i X-led (vänster/höger vinner)
-        if (this.offsetX < -this.swipeThreshold) {
-          return 'left';
-        } else if (this.offsetX > this.swipeThreshold) {
-          return 'right';
-        }
-      } else {
-        // Mer drag i Y-led (upp/ner vinner)
-        if (this.offsetY < -this.swipeThreshold) {
-          return 'up';
-        } else if (this.offsetY > this.swipeThreshold) {
-          return 'down';
-        }
+      // Om vertikal swipe
+      if (!isHorizontal) {
+        if (offsetY < 0) return yEdgeBottom ? 'from-down' : 'up';
+        if (offsetY > 0) return yEdgeTop ? 'from-up' : 'down';
       }
+
       return null;
-    },
-    triggerSwipe(direction) {
-      if (direction === 'up') {
-        console.log('TouchEvent: ' + direction);
-      }
-      else if (direction === 'down') {
-        console.log('TouchEvent: ' + direction);
-      }
-      else if (direction === 'left') {
-        console.log('TouchEvent: ' + direction);
-      }
-      else if (direction === 'right') {
-        console.log('TouchEvent: ' + direction);
-      }
-      this.previousIndex = this.currentIndex;
-      if (this.currentIndex < this.names.length - 1) {
-        this.currentIndex++;
+    };
 
-        // Ta bort gamla efter fade
-        setTimeout(() => {
-          this.previousIndex = null;
-        }, 500);
-      } else {
-        // Sista kortet, visa inget mer
-        console.log('Alla kort visade, nu gitta sista');
-        this.showNameplate = false;
-        this.previousIndex = null;
+    const reachesThreshold = () => {
+      const absX = Math.abs(position.offsetX);
+      const absY = Math.abs(position.offsetY);
+      const passedX = absX > position.SWIPE_THRESHOLD;
+      const passedY = absY > position.SWIPE_THRESHOLD;
+      const passedThreshold = passedX || passedY;
+      return passedThreshold;
+    };
 
-      }
-    },
-
-
-  },
-
-  computed: {
-    hasData() {
-      return this.names.length > 0;
+    const resetDisplay = () => {
+      state.display = 'nameplate';
+      console.log('clicked button')
     }
-  },
-  watch: {
-  },
-  mounted() {
-    this.checkLoginStatus(); 
-    //this.fetchData();  // Hämtar data när komponenten laddas
-  }
 
+    const triggerSwipe = async (direction) => {
+
+      console.log('TouchEvent:', direction, 'NamesLeft:', nameplate.names);
+      if(direction.includes('from')){
+        await postReactions();
+      }
+      switch (direction) {
+        case 'from-up':
+          fetchReactions('favorites')
+          state.display = 'list-favorites';
+          break;
+        case 'up':
+          addReaction(nameplate.names[nameplate.currentIndex].id, 1, true);
+          break;
+        case 'from-down':
+          state.display = 'letter-wheel';
+          break;
+        case 'down':
+          break;
+        case 'from-left':
+          fetchReactions('disliked')
+          state.display = 'list-disliked';
+          break;
+        case 'left':
+          addReaction(nameplate.names[nameplate.currentIndex].id, 0);
+          break;
+        case 'from-right':
+          fetchReactions('liked')
+          state.display = 'list-liked';
+          break;
+        case 'right':
+          addReaction(nameplate.names[nameplate.currentIndex].id, 1);
+          break;
+      }
+      console.log('reactions:', state.reactionsToAdd)
+     
+      if (!direction.includes('from')) {
+        nameplate.names.shift();
+        if (nameplate.names.length < 2) {
+          nameQuery.pagenum++;
+          console.log(nameQuery)
+          postReactions();
+          fetchData(nameQuery.letter, nameQuery.pagenum);
+        }
+        if (nameplate.names.length > 1) {
+          nameplate.nextIndex = nameplate.currentIndex + 1;
+        } else {
+          nameplate.nextIndex = null;
+        }
+        if (nameplate.names.length === 0) {
+          state.display = 'nameplate'
+        }
+      }
+
+
+    };
+    const addReaction = (nameInfoId, reaction, isAFavorite = false) => {
+      if(isAFavorite){
+        reaction = 1;
+      }
+      state.reactionsToAdd.push({ nameInfoId, reaction, isAFavorite });
+    };
+
+    const setStartPos = (touch) => {
+      position.startX = touch.clientX;
+      position.startY = touch.clientY;
+    };
+    const setOffsetPos = (touch) => {
+      position.offsetX = touch.clientX - position.startX;
+      position.offsetY = touch.clientY - position.startY;
+    };
+    const setStylingParams = () => {
+      rotation.value = position.offsetX * 0.01;
+      scale.value = 1 - Math.min(Math.abs(position.offsetX + position.offsetY), 200) / 1000;
+      opacity.value = 1 - Math.min(Math.abs(position.offsetX + position.offsetY), 200) / 800;
+    };
+    const resetOffset = () => {
+      position.offsetX = 0;
+      position.offsetY = 0;
+    };
+    const resetStylingParams = () => {
+      rotation.value = 0;
+      opacity.value = 1;
+      scale.value = 1;
+    };
+
+    const getGenderClass = (genderInt) => {
+      const genderMap = {
+        0: 'female',
+        1: 'male',
+      };
+      return `gender-${genderMap[genderInt] || 'unknown'}`;
+    };
+
+    onMounted(() => {
+      checkLoginStatus();
+    });
+
+    const shouldApplyOffsets = computed(() => {
+      const dir = getDirection();
+      return dir !== null && !dir.includes('from');
+    });
+
+   /* watch(
+      () => [
+        lists.favorites.length, 
+        lists.hasFetched.favorites,
+        lists.liked.length, 
+        lists.hasFetched.liked,
+        lists.disliked.length, 
+        lists.hasFetched.disliked,
+      ],
+      ([favLen, favFetched, likedLen, LikedFetched, disLen, disFetched]) => {
+        if (favLen === 0 && !favFetched) {
+          fetchReactions('favorites')
+        }
+        if (likedLen === 0 && !LikedFetched) {
+          fetchReactions('liked')
+        }
+        if (disLen === 0 && !disFetched) {
+          fetchReactions('disliked')
+        }
+      },
+      { immediate: true }
+    );*/
+
+    return {
+      resetDisplay,
+      lists,
+      shouldApplyOffsets,
+      state,
+      position,
+      nameplate,
+      rotation,
+      scale,
+      opacity,
+      fetchData,
+      login,
+      logout,
+      checkLoginStatus,
+      handleSwipe,
+      setStartPos,
+      setOffsetPos,
+      setStylingParams,
+      resetOffset,
+      resetStylingParams,
+      getGenderClass,
+    };
+  },
 }).mount('#app');
