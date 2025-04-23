@@ -30,10 +30,6 @@ namespace NameSpace
                 .WithMany(u => u.UserReactions)
                 .HasForeignKey(tc => tc.UserId);
 
-            modelBuilder.Entity<UserReaction>()
-                .HasOne(tc => tc.NameInfo)
-                .WithMany(p => p.UserReactions)
-                .HasForeignKey(tc => tc.NameInfoId);
 
             base.OnModelCreating(modelBuilder);
         }

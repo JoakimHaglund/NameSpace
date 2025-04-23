@@ -7,8 +7,7 @@
         public int Antal { get; set; }
         public string? DescriptionOfName { get; set; }
         public required Gender Gender { get; set; }
-        public ICollection<UserReaction>? UserReactions { get; set; }
-    }
+}
     public enum Gender
     {
         Girl = 0,
