@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>Namespace</title>
     <meta charset="UTF-8">
@@ -8,59 +9,146 @@
     <link rel="stylesheet" href="css/style.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
     <script type="module" src="scripts/main.js" defer></script>
 </head>
+
 <body>
     <header>
     </header>
     <div id="app">
-        <div v-if="isCheckingLogin">
+        <!-- Visa en spinner medan vi kollar login-status -->
+        <div v-if="state.isCheckingLogin">
             <div class="spinner"></div>
-          </div>
-        
-          <div v-else>
-        <div v-if="!isLoggedIn">
-            <h2>Logga in</h2>
-            <form @submit.prevent="login">
-                <input type="text" v-model="email" placeholder="E-post" required />
-                <input type="password" v-model="password" placeholder="Lösenord" required />
-                <button type="submit">Logga in</button>
-            </form>
-            <p v-if="errorMessage">{{ errorMessage }}</p>
         </div>
-        <div id="nameplate-wrapper" v-if="isLoggedIn">
-            <button @click="logout">Logga ut</button>
-            <div class="stack-wrapper">
-                <transition name="nameplate-fade">
-                    <div v-if="previousIndex !== null"
-                         class="nameplate"
-                         :key="'old-' + previousIndex">
-                      <h1>{{ names[previousIndex].name }}</h1>
-                      <p>{{ names[previousIndex].description }}</p>
-                    </div>
-                  </transition>
-                
-                  <!-- Nya kortet, fadar in -->
-                  <transition name="nameplate-fade">
-                    <div v-if="showNameplate" class="nameplate"
-                         :key="'current-' + currentIndex"
-                         @touchstart="handleSwipe"
-                         @touchmove="handleSwipe"
-                         @touchend="handleSwipe"
-                         :style="{
-                           transform: 'translate(' + offsetX + 'px, ' + offsetY + 'px)' +
-                                     ' rotate(' + rotation + 'deg)' +
-                                     ' scale(' + scale + ')',
-                           opacity: opacity
-                         }">
-                      <h1>{{ names[currentIndex].name }}</h1>
-                      <p>{{ names[currentIndex].description }}</p>
-                    </div>
-                  </transition>
+
+        <!-- När login-statusen är kontrollerad -->
+        <div v-else>
+            <!-- Om inte inloggad, visa login-formulär -->
+            <div v-if="!state.isLoggedIn">
+                <h2>Logga in</h2>
+                <form @submit.prevent="login">
+                    <input type="text" name="email" placeholder="E-post" required />
+                    <input type="password" name="password" placeholder="Lösenord" required />
+                    <button type="submit">Logga in</button>
+                </form>
+                <p v-if="state.errorMessage">{{ state.errorMessage }}</p>
             </div>
+
+            <!-- Om inloggad, visa namnplattor -->
+            <div id="nameplate-wrapper" v-if="state.isLoggedIn && state.display === 'nameplate'">
+                <button @click="logout">Logga ut</button>
+
+                <div class="stack-wrapper">
+                    <!-- Förra kortet, fades ut -->
+                    <transition name="nameplate-fade">
+                        <div v-if="nameplate.nextIndex !== null" class="nameplate"
+                            :class="getGenderClass(nameplate.names[nameplate.nextIndex]?.gender)"
+                            :key="'old-' + nameplate.nextIndex">
+                            <h1>{{ nameplate.names[nameplate.nextIndex].name }}</h1>
+                            <p>{{ nameplate.names[nameplate.nextIndex].description }}</p>
+                            <p>{{ nameplate.names[nameplate.nextIndex].antal }}</p>
+                        </div>
+                    </transition>
+
+                    <!-- Nuvarande kortet, fades in -->
+                    <transition name="nameplate-fade">
+                        <div v-if="nameplate.names[nameplate.currentIndex]" class="nameplate"
+                            :class="getGenderClass(nameplate.names[nameplate.currentIndex]?.gender)"
+                            :key="'current-' + nameplate.currentIndex" @touchstart="handleSwipe"
+                            @touchmove="handleSwipe" @touchend="handleSwipe" :style="shouldApplyOffsets ? {
+                               transform: 'translate(' + position.offsetX + 'px, ' + position.offsetY + 'px)' +
+                                         ' rotate(' + rotation + 'deg)' +
+                                         ' scale(' + scale + ')',
+                               opacity: opacity
+                             } : null">
+                            <h1>{{ nameplate.names[nameplate.currentIndex].name }}</h1>
+                            <p>{{ nameplate.names[nameplate.currentIndex].description }}</p>
+                            <p>{{ nameplate.names[nameplate.currentIndex].antal }}</p>
+                        </div>
+                    </transition>
+                </div>
             </div>
-          </div>
-    </div>
+            <div id="" v-if="state.isLoggedIn && state.display === 'letter-wheel'">
+                <h1>letter-wheel</h1>
+                <div id="letter-wheel-wrapper">
+
+                </div>
+                <button @click="resetDisplay">Go Back</button>
+            </div>
+            <div id="" v-if="state.isLoggedIn && state.display === 'list-favorites'">
+                <button @click="resetDisplay">Go Back</button>
+                <div v-if="lists.favorites.length === 0 && !lists.hasFetched.favorites">
+                    <div class="spinner"></div>
+                </div>
+                <div v-if="lists.favorites.length === 0 && lists.hasFetched.favorites">
+                    <p>Inga favoriter hittades :(</p>
+                </div>
+
+                <!-- När login-statusen är kontrollerad -->
+                <div v-else>
+                    <h1>list-favorites</h1>
+                    <div class="list-wrapper">
+                        <div class="list-item" v-for="(item, index) in lists.favorites" :key="index"
+                            :class="getGenderClass(item?.nameInfo.gender)">
+                            <h3>{{item.nameInfo.name}}</h3>
+                            <p>{{item.nameInfo.antal}}</p>
+                            <p>partner reaction</p>
+                        </div>
+                        <button @click="resetDisplay">Go Back</button>
+                    </div>
+                </div>
+            </div>
+                <div id="" v-if="state.isLoggedIn && state.display === 'list-disliked'">
+                    <button @click="resetDisplay">Go Back</button>
+                    <div v-if="lists.disliked.length === 0 && !lists.hasFetched.disliked">
+                        <div class="spinner"></div>
+                    </div>
+                    <div v-if="lists.disliked.length === 0 && lists.hasFetched.disliked">
+                        <p>Inga disliked hittades :(</p>
+                    </div>
+    
+                    <!-- När login-statusen är kontrollerad -->
+                    <div v-else>
+                        <h1>list-disliked</h1>
+                        <div class="list-wrapper">
+                            <div class="list-item" v-for="(item, index) in lists.disliked" :key="index"
+                                :class="getGenderClass(item?.nameInfo.gender)">
+                                <h3>{{item.nameInfo.name}}</h3>
+                                <p>{{item.nameInfo.antal}}</p>
+                                <p>partner reaction</p>
+                            </div>
+
+                        </div>
+                    </div>
+                   
+                </div>
+                <div id="" v-if="state.isLoggedIn && state.display === 'list-liked'">
+                    <button @click="resetDisplay">Go Back</button>
+                        <div v-if="lists.liked.length === 0 && !lists.hasFetched.liked">
+                            <div class="spinner"></div>
+                        </div>
+                        <div v-if="lists.liked.length === 0 && lists.hasFetched.liked">
+                            <p>Inga liked hittades :(</p>
+                        </div>
+        
+                        <!-- När login-statusen är kontrollerad -->
+                        <div v-else>
+                            <h1>list-liked</h1>
+                            <div class="list-wrapper">
+                                <div class="list-item" v-for="(item, index) in lists.liked" :key="index"
+                                    :class="getGenderClass(item?.nameInfo.gender)">
+                                    <h3>{{item.nameInfo.name}}</h3>
+                                    <p>{{item.nameInfo.antal}}</p>
+                                    <p>partner reaction</p>
+                                </div>
+                                <button @click="resetDisplay">Go Back</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
 </body>
+
 </html>
