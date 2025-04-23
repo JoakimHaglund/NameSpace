@@ -15,22 +15,34 @@ namespace NameSpace.Services
             _context = context;
             _fileReader = fileReader;
         }
-        public async Task<List<NameInfo>?> GetUnreactedByLetter(string userId, char letter, int pageNumber = 1, int pageSize = 50)
+        public async Task<List<NameInfo>?> GetUnreactedByLetter(NameQueryDto nameQueryDto, string? userId)
         {
             // Validera att pageSize är mellan 50 och 100, om inte ge en default på 50
-            if (pageSize < 50 || pageSize > 100)
+            if (nameQueryDto.PageSize < 10 || nameQueryDto.PageSize > 100)
             {
-                pageSize = 50; // Kan du ändra till 100 om du tycker det
+                nameQueryDto.PageSize = 50; // Kan du ändra till 100 om du tycker det
             }
             var user = await _context.Users.Include(u => u.UserReactions).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null) return null;
 
             var reactedTo = user.UserReactions?.Select(n => n.NameInfoId).ToList() ?? new List<Guid>();
-            // Sätt startpunkt (Skip) och antalet objekt att hämta (Take)
-            var nameInfo = await _context.NameInfos
-                .Where(n => n.Name.StartsWith(letter.ToString().ToUpper()) && !reactedTo.Contains(n.Id))
-                .Skip((pageNumber - 1) * pageSize) // Hoppa över föregående sidor
-                .Take(pageSize) // Hämta så många som specificerats
+
+            var query = _context.NameInfos
+                .Where(n => n.Name.StartsWith(nameQueryDto.Letter.ToString().ToUpper()) && !reactedTo.Contains(n.Id));
+
+            if (nameQueryDto.MinCount.HasValue)
+            {
+                query = query.Where(n => n.Antal >= nameQueryDto.MinCount);
+            }
+            if (nameQueryDto.MaxCount.HasValue)
+            {
+                query = query.Where(n => n.Antal >= nameQueryDto.MaxCount);
+            }
+
+            var nameInfo = await query
+                .Skip((nameQueryDto.PageNumber - 1) * nameQueryDto.PageSize)
+                .Take(nameQueryDto.PageSize)
+                .OrderBy(n => n.Name)
                 .ToListAsync();
 
             return nameInfo;

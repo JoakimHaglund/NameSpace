@@ -47,17 +47,17 @@ namespace NameSpace.Controllers
             return Ok(nameInfo);
         }
         [HttpGet("by-letter")]
-        public async Task<IActionResult> GetByFirstChar([FromQuery] char letter, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 50)
+        public async Task<IActionResult> GetByFirstChar([FromQuery] NameQueryDto nameQueryDto)
         {
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized("This user does not exist");
 
-            var nameInfo = await _nameInfoService.GetUnreactedByLetter(userId, letter, pageNumber, pageSize);
+            var nameInfo = await _nameInfoService.GetUnreactedByLetter(nameQueryDto, userId);
             if (nameInfo == null) return Unauthorized("User not found");
 
             // Om ingen matchning finns, returnera NotFound istället för null
-            if (!nameInfo.Any()) return NotFound($"Inget namn hittades som börjar med '{letter}'");
+            if (!nameInfo.Any()) return NotFound($"Inget namn hittades som börjar med '{nameQueryDto.Letter}'");
 
             return Ok(nameInfo);
         }
