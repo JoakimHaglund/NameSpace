@@ -7,12 +7,12 @@
         public required ReactionType Reaction { get; set; }
         public bool IsAFavorite { get; set; } = false;
 
-        public required User User { get; set; }
-        public required NameInfo NameInfo { get; set; }
+        public User? User { get; set; }
+        public NameInfo? NameInfo { get; set; }
     }
     public enum ReactionType
     {
         Like = 1,
-        Dislike = 2,
+        Dislike = 0,
     }
 }
