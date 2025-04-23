@@ -49,13 +49,13 @@ namespace NameSpace.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = await _userManager.FindByNameAsync(request.Username);
-            if (user == null) return Unauthorized();
+            if (user == null) return Unauthorized("No such user" );
 
             var checkPassword = await _userManager.CheckPasswordAsync(user, request.Password);
 
             if (!checkPassword)
             {
-                return Unauthorized();
+                return Unauthorized("Wrong password");
             }
 
             var token = _tokenProvider.Create(user);
