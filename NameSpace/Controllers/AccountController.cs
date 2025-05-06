@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using NameSpace.Dtos;
 using NameSpace.Models;
 using NameSpace.Services;
+using System.Web;
 
 
 namespace NameSpace.Controllers
@@ -12,44 +14,104 @@ namespace NameSpace.Controllers
     public class AccountController : Controller
     {
         private readonly UserManager<User> _userManager;
-
+        private readonly AppDbContext _context;
         private readonly TokenProvider _tokenProvider;
-        public AccountController(UserManager<User> userManager, TokenProvider tokenProvider)
+        private readonly EmailService _emailProvider;
+        public AccountController(UserManager<User> userManager, TokenProvider tokenProvider, EmailService emailProvider, AppDbContext context)
         {
             _userManager = userManager;
             _tokenProvider = tokenProvider;
+            _emailProvider = emailProvider;
+            _context = context;
         }
-
         // Registrering
         [HttpPost("register")]
-        public async Task<IActionResult> Register(string username, string password)
+        public async Task<IActionResult> Register([FromBody] RegisterUserRequest registerUserRequest)
         {
-            var user = new User { UserName = username };
-            var result = await _userManager.CreateAsync(user, password);
+            //add email confirmation
+            var user = new User 
+            { 
+                UserName = registerUserRequest.Username, 
+                Email = registerUserRequest.Email,
+                LockoutEnabled = true,
+                LockoutEnd = DateTimeOffset.MaxValue
+            };
 
+            var result = await _userManager.CreateAsync(user, registerUserRequest.Password);
             if (result.Succeeded)
             {
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var encodedToken = HttpUtility.UrlEncode(token);
+                var email = _emailProvider.TemplateEmailVerification(user, encodedToken);
+                if(email == null)
+                {
+                    return StatusCode(500, "Något gick fel med att skicka email");
+                }
+                await _emailProvider.SendEmailAsync(email.SendTo, email.Subject, email.Body);
                 return Ok(user);
             }
 
             return BadRequest(result.Errors);
         }
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromBody] ConfirmEmailDto emailDto)
+        {
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(emailDto.Email);
+                if(user == null)
+                {
+                    return NotFound("Could not find a pending email confirmation");
+                }
+                string decodedToken = HttpUtility.UrlDecode(emailDto.Token);
+                var result = await _userManager.ConfirmEmailAsync(user, emailDto.Token);
+                if (!result.Succeeded)
+                {
+                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var encodedToken = HttpUtility.UrlEncode(token);
+                    var email = _emailProvider.TemplateEmailVerification(user, encodedToken);
+                    if (email == null)
+                    {
+                        return StatusCode(500, "Något gick fel med att skicka email");
+                    }
+                    await _emailProvider.SendEmailAsync(email.SendTo, email.Subject, email.Body);
+                    return BadRequest("Ogiltig token!");
+                }
+                user.LockoutEnd = null; // Gittar låset
+                await _userManager.UpdateAsync(user);
+                return Ok(user);
 
+            } catch (Exception ex)
+            {
+                if (ex is InvalidOperationException)
+                {
+                    return BadRequest($"En användare med email: {emailDto.Email} finns redan.");
+                }
+                else
+                {
+                    return BadRequest(ex.Message);
+                }
+            }
+
+        }
         [HttpPost("logout")]
         public IActionResult Logout()
         {
             // Ta bort JWT-token från cookie (eller session)
-            Response.Cookies.Delete("auth_token");  // Byt namn till vad du kallar din cookie
+            Response.Cookies.Delete("auth_token");
 
             return Ok(new { message = "User logged out" });
         }
-
         // Inloggning
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var user = await _userManager.FindByNameAsync(request.Username);
+            var user = await _userManager.FindByNameAsync(request.Username) ?? await _userManager.FindByEmailAsync(request.Username);
             if (user == null) return Unauthorized("No such user" );
+            if (user.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.UtcNow)
+            {
+                return Unauthorized("Email is not verified");
+            }
 
             var checkPassword = await _userManager.CheckPasswordAsync(user, request.Password);
 
@@ -68,7 +130,7 @@ namespace NameSpace.Controllers
                 SameSite = SameSiteMode.Lax, // Skyddar mot CSRF
                 Expires = DateTime.UtcNow.AddDays(1) // Expiration time
             });
-
+           // await _emailProvider.SendEmailAsync("haglund_dragon@hotmail.com", "test", "this is a test email");
             return Ok(new { message = "Logged in successfully" });
         }
         [HttpGet("check-login")]
@@ -92,6 +154,66 @@ namespace NameSpace.Controllers
             }
 
             return Ok(new { message = "User is logged in" });
+        }
+
+        [Authorize]
+        [HttpPost("add-partner")]
+        public async Task<IActionResult> AddPartner([FromBody] string partner)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Unauthorized("Not logged in");
+            }
+            var partnerToAdd = await _userManager.FindByEmailAsync(partner) ?? await _userManager.FindByNameAsync(partner);
+            if (partnerToAdd == null)
+            {
+                return NotFound("Could not find a partner with that name or email");
+            }
+            var newPartner = new ConfirmPartner
+            {
+                Id = new Guid(),
+                Token = new Guid(),
+                RequestingUserId = currentUser.Id,
+                RecivingUserId = partnerToAdd.Id
+            };
+            var email = _emailProvider.TemplatePartnerRequest(currentUser, partnerToAdd, newPartner.Token);
+            if (email == null)
+            {
+                return StatusCode(500, "Kunde inte skicka mailet");
+            }
+            await _emailProvider.SendEmailAsync(email.SendTo, email.Subject, email.Body);
+
+            return Ok();
+        }
+        [HttpPost("confirm-partner")]
+        public async Task<IActionResult> ConfirmPartner([FromQuery] Guid token)
+        {
+            var partnerRequest = _context.ConfirmPartner.FirstOrDefault(p => p.Token == token);
+
+            if (partnerRequest == null)
+            {
+                return BadRequest("No partner request with that token was found");
+            }
+
+            var requestingUser = await _userManager.FindByIdAsync(partnerRequest.RequestingUserId);
+            var recivingUser = await _userManager.FindByIdAsync(partnerRequest.RecivingUserId);
+
+            if (requestingUser == null || recivingUser == null)
+            {
+                return BadRequest("user not found");
+            }
+            requestingUser.PartnerUserId = recivingUser.Id;
+            recivingUser.PartnerUserId = requestingUser.Id;
+
+            await _userManager.UpdateAsync(requestingUser);
+            await _userManager.UpdateAsync(recivingUser);
+
+            _context.ConfirmPartner.Remove(partnerRequest);
+            _context.SaveChanges();
+
+
+            return Ok();
         }
     }
 }
