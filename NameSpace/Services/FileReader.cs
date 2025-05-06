@@ -7,9 +7,9 @@ namespace NameSpace.Services
 {
     public class FileReader
     {
-        public async Task<HashSet<NameInfoDto>> ReadCSV(IFormFile file)
+        public async Task<HashSet<NewNameInfoDto>> ReadCSV(IFormFile file)
         {
-            var resultSet = new HashSet<NameInfoDto>(); // 🔥 HashSet istället för dictionary
+            var resultSet = new HashSet<NewNameInfoDto>(); // 🔥 HashSet istället för dictionary
 
             using (var reader = new StreamReader(file.OpenReadStream(), Encoding.UTF8))
             {
@@ -32,7 +32,7 @@ namespace NameSpace.Services
                         var antal = int.Parse(match[1].Value.Replace(" ", ""));
                         var gender = int.Parse(match[2].Value);
 
-                        var dto = new NameInfoDto
+                        var dto = new NewNameInfoDto
                         {
                             Name = name,
                             Antal = antal,
