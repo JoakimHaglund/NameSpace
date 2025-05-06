@@ -45,33 +45,52 @@ namespace NameSpace.Controllers
             return Ok(nameInfo);
         }
         [HttpGet("reactions")]
-        public async Task<IActionResult> GetReactions([FromQuery] string reaction)
+        public async Task<IActionResult> GetReactions([FromQuery] ReactionType reaction)
         {
 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return Unauthorized("This user does not exist");
+            var user = await _context.Users
+                .Include(u => u.PartnerUser)
+                .ThenInclude(p => p.UserReactions)
+                .FirstOrDefaultAsync(u => u.Id == User
+                    .FindFirstValue(ClaimTypes.NameIdentifier)
+                    );
+
+            if (user == null) return Unauthorized("User not found");
 
             var reactions = await _context.UserReactions
                 .Include(r => r.NameInfo)
-                .Where(r => r.UserId == userId)
+                .Where(r => r.UserId == user.Id)
                 .ToListAsync();
-            // Om ingen matchning finns, returnera NotFound istället för null
-            if (!reactions.Any()) return BadRequest($"Inget namn hittades som börjar med ''");
-            if (reaction == "favorites")
-            {
-                reactions = reactions.Where(r => r.IsAFavorite == true).ToList();
-            }
-            else if (reaction == "liked")
-            {
-                reactions = reactions.Where(r => r.Reaction == ReactionType.Like).ToList();
 
-            }
-            else if (reaction == "disliked")
+            var partnerReactionDict = user.PartnerUser?.UserReactions?
+                .ToDictionary(r => r.NameInfoId, elementSelector: r => r.Reaction) ?? [];
+
+            if (!reactions.Any()) return NotFound($"Inga reaktioner hittades");
+
+            switch (reaction)
             {
-                reactions = reactions.Where(r => r.Reaction == ReactionType.Dislike).ToList();
+                case ReactionType.Favorite:
+                    reactions = reactions.Where(r => r.Reaction == ReactionType.Favorite).ToList();
+                    break;
+                case ReactionType.Like:
+                    reactions = reactions.Where(r => r.Reaction == ReactionType.Like).ToList();
+                    break;
+                case ReactionType.Dislike:
+                    reactions = reactions.Where(r => r.Reaction == ReactionType.Dislike).ToList();
+                    break;
             }
 
-            return Ok(reactions);
+            var result = reactions.Select(n => new ReactionListDto
+            {
+                NameInfoId = n.NameInfoId,
+                Name = n.NameInfo!.Name,
+                Antal = n.NameInfo.Antal,
+                Gender = (int)n.NameInfo.Gender,
+                PartnerReaction = partnerReactionDict.ContainsKey(n.NameInfo.Id) ? (int)partnerReactionDict[n.NameInfo.Id] : null
+            }).ToList();
+    
+
+            return Ok(result);
         }
 
         // POST api/<ValuesController>
@@ -89,7 +108,6 @@ namespace NameSpace.Controllers
                     UserId = userId,
                     NameInfoId = reaction.NameInfoId,
                     Reaction = (ReactionType)reaction.Reaction,
-                    IsAFavorite = reaction.IsAFavorite
                 });
             }
             try
