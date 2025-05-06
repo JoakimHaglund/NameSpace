@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using NameSpace.Dtos;
 using NameSpace.Models;
+using System;
 using System.Security.Claims;
 
 namespace NameSpace.Services
@@ -15,12 +16,12 @@ namespace NameSpace.Services
             _context = context;
             _fileReader = fileReader;
         }
-        public async Task<List<NameInfo>?> GetUnreactedByLetter(NameQueryDto nameQueryDto, string? userId)
+        public async Task<List<NameInfoDto>?> GetUnreactedByLetter(NameQueryDto nameQueryDto, string? userId)
         {
             // Validera att pageSize är mellan 50 och 100, om inte ge en default på 50
-            if (nameQueryDto.PageSize < 10 || nameQueryDto.PageSize > 100)
+            if (nameQueryDto.PageSize < 1)
             {
-                nameQueryDto.PageSize = 50; // Kan du ändra till 100 om du tycker det
+                nameQueryDto.PageSize = 1; // Kan du ändra till 100 om du tycker det
             }
             var user = await _context.Users.Include(u => u.UserReactions).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null) return null;
@@ -28,7 +29,19 @@ namespace NameSpace.Services
             var reactedTo = user.UserReactions?.Select(n => n.NameInfoId).ToList() ?? new List<Guid>();
 
             var query = _context.NameInfos
-                .Where(n => n.Name.StartsWith(nameQueryDto.Letter.ToString().ToUpper()) && !reactedTo.Contains(n.Id));
+                .Where(n => !reactedTo.Contains(n.Id));
+
+            if(nameQueryDto.Letter == '?')
+            {
+                var random = new Random();
+                query = query.OrderBy(x => Guid.NewGuid());
+
+            }
+            else
+            {
+                query = _context.NameInfos
+                    .Where(n => n.Name.StartsWith(nameQueryDto.Letter.ToString().ToUpper()));
+            }
 
             if (nameQueryDto.MinCount.HasValue)
             {
@@ -39,13 +52,27 @@ namespace NameSpace.Services
                 query = query.Where(n => n.Antal >= nameQueryDto.MaxCount);
             }
 
-            var nameInfo = await query
+            var nameInfo = query
                 .Skip((nameQueryDto.PageNumber - 1) * nameQueryDto.PageSize)
-                .Take(nameQueryDto.PageSize)
-                .OrderBy(n => n.Name)
-                .ToListAsync();
+                .Take(nameQueryDto.PageSize);
+            if (nameQueryDto.Letter != '?')
+            {
+                nameInfo = nameInfo.OrderBy(n => n.Name);
 
-            return nameInfo;
+            }
+            var partnerReactionDict = user.PartnerUser?.UserReactions?.ToDictionary(r => r.NameInfoId, elementSelector: r => r.Reaction)
+                            ?? new Dictionary<Guid, ReactionType>();
+            var result = nameInfo.Select(n => new NameInfoDto
+            {
+                NameInfoId = n.Id,
+                Name = n.Name,
+                Antal = n.Antal,
+                DescriptionOfName = n.DescriptionOfName,
+                Gender = (int)n.Gender,
+                PartnerReaction = partnerReactionDict.ContainsKey(n.Id) ? (int)partnerReactionDict[n.Id] : null
+            }).ToList();
+
+            return result;
         }
         public async Task<(int Added, int Updated)?> HandleFileUpload(IFormFile file)
         {
