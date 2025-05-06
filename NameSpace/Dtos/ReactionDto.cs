@@ -6,6 +6,6 @@ namespace NameSpace.Dtos
     {
         public required Guid NameInfoId { get; set; }
         public required int Reaction { get; set; }
-        public bool IsAFavorite { get; set; } = false;
+        public int? PartnerReaction { get; set; }
     }
 }

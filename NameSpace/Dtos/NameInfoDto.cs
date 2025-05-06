@@ -4,9 +4,12 @@ namespace NameSpace.Dtos
 {
     public class NameInfoDto
     {
+        public required Guid NameInfoId { get; set; }
         public required string Name { get; set; }
         public int Antal { get; set; }
         public string? DescriptionOfName { get; set; }
+
+        public int? PartnerReaction { get; set; } = null;
         public required int Gender { get; set; }
 
         // 👇 Detta behövs för att HashSet ska fatta om två objekt är samma 
