@@ -48,8 +48,8 @@
 </template>
 
 <script setup lang="ts">
-import { state, Display, nameQuery, SubMenu, nameplate } from '../../scripts/state.ts'
-import * as api from '../../scripts/api.ts'
+import { state, Display, nameQuery, SubMenu, nameplate } from '@scripts/state.ts'
+import * as api from '@scripts/api.ts'
 import { ref, reactive } from 'vue';
 import axios from 'axios'
 import { useRouter } from 'vue-router'

@@ -27,8 +27,8 @@
 </template>
 
 <script setup lang="ts">
-import * as api from '../../scripts/api.ts';
-import { state } from '../../scripts/state.ts';
+import * as api from '@scripts/api.ts';
+import { state } from '@scripts/state.ts';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router'
 const router = useRouter();
