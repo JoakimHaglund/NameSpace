@@ -80,7 +80,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://127.0.0.1:5500", "http://192.168.50.9:5500", "https://192.168.50.9:5500") // <-- din frontend-url
+            policy.WithOrigins("http://127.0.0.1:5500", "http://192.168.50.9:5500", "http://localhost:5173") // <-- din frontend-url
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -94,6 +94,12 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
         listenOptions.UseHttps(); // HÄR ÄR DITT HTTPS
     });
 });
+
+builder.Services.Configure<RouteOptions>(options =>
+{
+    options.LowercaseUrls = true;
+});
+
 var app = builder.Build();
 
 app.UseCors("AllowFrontend");
