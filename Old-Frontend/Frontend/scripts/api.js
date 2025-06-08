@@ -7,11 +7,10 @@ const apiClient = axios.create({
     },
     withCredentials: true,
 });
-
 export const getNamesByLetter = async (letter, pageNumber = 1, minCount = 0, pageSize = 5) => {
     try {
         console.log(letter, pageNumber);
-        const response = await apiClient.get('/Names/by-letter', {
+        const response = await apiClient.get('/names/by-letter', {
             params: {
                 letter,
                 pageNumber,
@@ -27,7 +26,7 @@ export const getNamesByLetter = async (letter, pageNumber = 1, minCount = 0, pag
 };
 export const loginUser = async (username, password) => {
     try {
-        const response = await apiClient.post('/Account/login', {
+        const response = await apiClient.post('/account/login', {
             username: username,
             password: password,
         });
@@ -52,7 +51,7 @@ export const completeRegistration = async (token, email) => {
 }
 export const registerUser = async (username, email, password) => {
     try {
-        const response = await apiClient.post('/Account/register', {
+        const response = await apiClient.post('/account/register', {
             username: username,
             email: email,
             password: password,
@@ -74,7 +73,7 @@ export const addReactions = async (reactions) => {
 };
 export const addPartnerRequest = async (partner) => {
     try {
-        const response = await apiClient.post('/Account/add-partner', partner, {
+        const response = await apiClient.post('/account/add-partner', partner, {
             headers: {
               'Content-Type': 'application/json'
             }
@@ -85,10 +84,9 @@ export const addPartnerRequest = async (partner) => {
         return error.response.data;
     }
 };
-
 export const fetchReactions = async (reaction) => {
     try {
-        const response = await apiClient.get('/Reactions/reactions', {
+        const response = await apiClient.get('/reactions/reactions', {
             params: {
                 reaction: reaction,
             }
@@ -111,10 +109,73 @@ export const fetchReactions = async (reaction) => {
         console.error('API-anropet misslyckades:', error);
     }
 };
-
 export const postReactions = async () => {
     try {
-        const response = await apiClient.post('/Reactions/reactions', state.reactionsToAdd);   
+        const response = await apiClient.post('/reactions/reactions', state.reactionsToAdd);   
+        console.log("reactionsToAdd: ", response);
+        lists.hasFetched.favorites = false;
+        if (response.status === 200) {
+            state.reactionsToAdd = [];
+        } else {
+            state.errorMessage = response;
+        }
+    } catch (error) {
+        console.error('Reaction http error ', error);
+        return error.response.data;
+    }
+};
+export const postPartnerRequest = async (partner) => {
+    try {
+        const response = await apiClient.post('/account/request-partner', {
+            params: {
+                partner: partner,
+            }
+        });   
+        console.log("request-partner: ", response);
+        lists.hasFetched.favorites = false;
+        if (response.status === 200) {
+
+        } else {
+            state.errorMessage = response;
+        }
+    } catch (error) {
+        console.error('Reaction http error ', error);
+        return error.response.data;
+    }
+};
+export const postAddPartner = async (partnerRequestId) => {
+    try {
+        const response = await apiClient.post('/account/add-partner', partnerRequestId);   
+        console.log("add-partner: ", response);
+        lists.hasFetched.favorites = false;
+        if (response.status === 200) {
+
+        } else {
+            state.errorMessage = response;
+        }
+    } catch (error) {
+        console.error('Reaction http error ', error);
+        return error.response.data;
+    }
+};
+export const fetchPartnerRequests = async () => {
+    try {
+        const response = await apiClient.get('/account/partner-requests');   
+        console.log("partner-requests: ", response);
+        lists.hasFetched.favorites = false;
+        if (response.status === 200) {
+            return response.data;
+        } else {
+            state.errorMessage = response;
+        }
+    } catch (error) {
+        console.error('Reaction http error ', error);
+        return error.response.data;
+    }
+};
+export const deletePartner = async (partnerRequestId) => {
+    try {
+        const response = await apiClient.delete('/account/partner-request', partnerRequestId);
         console.log("reactionsToAdd: ", response);
         lists.hasFetched.favorites = false;
         if (response.status === 200) {

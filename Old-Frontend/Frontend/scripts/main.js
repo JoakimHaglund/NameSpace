@@ -22,6 +22,11 @@ Vue.createApp({
         noReaction: '../resources/svgs/reactions/no-reaction.svg',
       },
     });
+    const swipeItem = reactive({
+      currentElement: null,
+      offsetX: 0,
+      initalLeft: 0
+    });
     
     const sliderValue = ref(50)
 
@@ -47,12 +52,9 @@ Vue.createApp({
         console.error('API-anropet misslyckades:', error);
       }
     };
-
-
-
     const checkLoginStatus = async () => {
       try {
-        await axios.get('http://192.168.50.9:5228/api/Account/check-login', {
+        await axios.get('http://192.168.50.9:5228/api/account/check-login', {
           withCredentials: true,
         });
         state.isLoggedIn = true;
@@ -63,7 +65,6 @@ Vue.createApp({
         state.isCheckingLogin = false;
       }
     };
-
     const login = async (event) => {
       const response = await api.loginUser(event.target.email.value, event.target.password.value);
       console.log("Login: ", response);
@@ -104,11 +105,9 @@ Vue.createApp({
       } else {
         state.errorMessage = 'no partner from submit';
       }
-
-
     };
     const logout = () => {
-      axios.post('http://192.168.50.9:5228/api/Account/logout', {}, { withCredentials: true })
+      axios.post('http://192.168.50.9:5228/api/account/logout', {}, { withCredentials: true })
         .then(() => {
           state.isLoggedIn = false;
           // window.location.href = '/login';  // eller använd vue-router för redirect
@@ -194,10 +193,10 @@ Vue.createApp({
     const resetDisplay = () => {
       state.display = Display.CARD;
       console.log('clicked button')
-    }
+    };
     const toggleRegisterForm = () => {
       state.showRegisterForm = !state.showRegisterForm;
-    }
+    };
     const toggleSubmenu = (target) => {
       if (state.submenu === target){
         state.submenu = SubMenu.MAIN;
@@ -205,7 +204,49 @@ Vue.createApp({
       else {
         state.submenu = target;
       }
-    }
+    };
+
+    const horizontalSwipe = (event, index, items) => {
+     
+      event.preventDefault();
+      console.log('touch event:', event.type);
+      swipeItem.currentElement = event.target;
+      const rect = swipeItem.currentElement.getBoundingClientRect();
+      if (event.type === "touchstart") { //TouchEventStarts
+        //get the element
+
+        swipeItem.offsetX = event.touches[0].clientX - rect.left;
+
+        swipeItem.initalLeft = rect.left;
+
+      } else if (event.type === "touchmove") { //Client moves finger
+        if (!swipeItem.currentElement) return;
+
+        const newX = event.touches[0].clientX - swipeItem.offsetX;
+console.log(rect.top)
+        // Flytta elementet direkt
+        swipeItem.currentElement.style.position = 'absolute'
+        swipeItem.currentElement.style.left = newX + 'px'
+        swipeItem.currentElement.style.left = rect.top + 'px';
+      } else if (event.type === "touchend") { //Client lifts finger
+        if (!swipeItem.currentElement) return;
+        const x = parseInt(swipeItem.currentElement.style.top || '0')
+  
+        // Om vi släpper under en viss y-position, ta bort elementet
+        if (x > 400) {
+          items.value.splice(index, 1)
+          currentElement = null
+        } else {
+          // Annars, återställ till originalposition
+          swipeItem.currentElement.style.transition = '0.3s'
+          swipeItem.currentElement.style.left = swipeItem.initialLeft + 'px'
+          swipeItem.currentElement.style.top = swipeItem.initialTop + 'px'
+        }
+      
+      }
+    };
+
+
     onMounted(() => {
         // Hämta query-param direkt från URL:n
         const params = new URLSearchParams(window.location.search);
@@ -247,6 +288,7 @@ Vue.createApp({
       state,
       position,
       nameplate,
+      horizontalSwipe,
       toggleSubmenu,
       toggleRegisterForm,
       onScroll,

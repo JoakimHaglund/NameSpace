@@ -1,0 +1,395 @@
+/*
+======================================================================
+Globala regler
+======================================================================
+*/
+html,
+body {
+	min-height: 100dvh;
+	width: 100%;
+	margin: 0;
+	overflow-x: hidden;
+	/* Tar bort horizontal scroll #1e629d; 1fb1bb 00d8e6 308a91 283a3c 325252*/
+	background: linear-gradient(135deg, #e6ecff, #ffe6f7);
+}
+
+html {
+	/*Bra storlek för att använda REM då 62.5% av 16px är 10*/
+	font-size: 62.5%;
+	scroll-behavior: smooth;
+}
+
+* {
+	font-size: 1.6rem;
+	font-family: 'Atma', 'Montserrat', 'Roboto', Arial, Helvetica, sans-serif;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	white-space: normal;
+}
+
+h1 {
+	font-size: 10rem;
+	text-align: center;
+}
+.menu {
+	display: grid;
+	grid-template-columns: 1fr 3fr 1fr;
+	gap: 15px;
+	place-items: center;
+}
+.gradiant-text {
+	background: linear-gradient(135deg, #2950ffcc, #d804bccc);
+	background-clip: text;
+	-webkit-background-clip: text;	/* KLISTRA bakgrunden PÅ texten */
+	-webkit-text-fill-color: transparent;	/* Gör textfärgen genomskinlig så bakgrunden syns */
+}
+
+.login-form,
+.register-form {
+	display: grid;
+	grid-template-rows: 1fr 1fr 1fr 1fr;
+	gap: 10px;
+	margin-top: 2rem;
+	justify-content: center;
+}
+
+.login-form input,
+.register-form input{
+	padding: 1rem;
+	width: 80dvw;
+}
+
+.login-form button,
+.register-form button{
+	all: unset;
+	cursor: pointer;
+	background: linear-gradient(135deg, #2950ffcc, #d804bccc);
+	font-size: 2rem;
+	font-weight: bolder;
+	text-align: center;
+	color: #ffe6f7;
+	transition-duration: 0.4s;
+}
+
+.login-form button:hover {
+	background: linear-gradient(180deg, #2950ffcc, #d804bccc);
+	color: #e6ecff;
+}
+
+.login-form button:active{
+	background: linear-gradient(135deg, #d804bccc, #2950ffcc);
+	color: #e6ecff;
+}
+#register-form-buttons-wrapper {
+	display: grid;
+	gap: 5px;
+	grid-template-columns: 1fr 1fr;
+}
+#register-form-buttons-wrapper button:last-child {
+	background: linear-gradient(135deg, #d804bccc, #2950ffcc );
+}
+
+#register-form-buttons-wrapper button:first-child:hover {
+	background: linear-gradient(175deg, #2950ffcc, #d804bccc);
+	color: #e6ecff;
+}
+
+
+#register-form-buttons-wrapper button:first-child:active {
+	background: linear-gradient(135deg, #d804bccc, #2950ffcc);
+	color: #e6ecff;
+}
+#register-form-buttons-wrapper button:last-child:hover {
+	background: linear-gradient(175deg, #d804bccc, #2950ffcc);
+	color: #e6ecff;
+}
+
+
+#register-form-buttons-wrapper button:last-child:active {
+	background: linear-gradient(135deg, #2950ffcc, #d804bccc);
+	color: #e6ecff;
+}
+
+
+
+#nameplate-wrapper {
+	display: grid;
+	outline: 1px red solid;
+	justify-content: center;
+	/* Centrerar innehållet horisontellt */
+	align-content: center;
+	/* Centrerar innehållet vertikalt */
+	height: 100vh;
+	/* Full höjd på skärmen */
+	width: 100vw;
+	/* Full bredd på skärmen */
+	overflow: hidden;
+}
+
+.stack-wrapper {
+	position: relative;
+	width: 80vw;
+	height: 80vh;
+}
+
+.gender-male {
+	background-color: #2950ffcc;
+	color: #ffe6f7;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.gender-female {
+	background-color: #d804bccc;
+	color: #e6ecff;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.nameplate {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	padding: 2rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+	border-radius: 1rem;
+	text-align: center;
+	word-break: break-word;
+	overflow-wrap: break-word;
+	white-space: normal;
+}
+
+.nameplate-fade-enter-active,
+.nameplate-fade-leave-active {
+	transition: opacity 0.4s ease, transform 0.4s ease;
+	width: 80vw;
+	height: 80vh;
+}
+
+.nameplate h3,
+.nameplate p {
+	max-width: 100%;
+	word-break: break-word;
+	overflow-wrap: break-word;
+	white-space: normal;
+}
+
+.nameplate-fade-enter-from {
+	opacity: 0;
+	transform: scale(0.9);
+}
+
+.nameplate-fade-enter-to {
+	opacity: 1;
+	transform: scale(1);
+}
+
+.nameplate-fade-leave-from {
+	opacity: 1;
+	transform: scale(1);
+}
+
+.nameplate-fade-leave-to {
+	opacity: 0;
+	transform: scale(1.1);
+}
+
+.spinner {
+	border: 8px solid #f3f3f3;
+	/* light gray */
+	border-top: 8px solid #3498db;
+	/* blå */
+	border-radius: 50%;
+	width: 60px;
+	height: 60px;
+	animation: spin 1s linear infinite;
+	margin: 50px auto;
+}
+
+@keyframes spin {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+.list-wrapper {
+	display: grid;
+	justify-content: center;
+	align-content: center;
+	width: 100vw;
+	text-align: center;
+	word-break: break-word;
+	overflow-wrap: break-word;
+	white-space: normal;
+}
+
+.list-item {
+	display: grid;
+	grid-auto-flow: column;
+	grid-template-columns: 0.5fr 3fr 1fr 1fr;
+	gap: 10px;
+	align-items: center;
+	min-width: 80vw;
+	max-width: 95vw;
+	margin: 0.5rem;
+	padding: 2rem;
+	border-radius: 10px;
+	box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);
+	box-shadow: inset 5px 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.list-item h3 {
+	font-size: 3rem;
+	justify-self: left;
+}
+.range-slider-wrapper {
+	display: grid;
+	grid-row: 1fr 1fr;
+	align-content: center;
+	justify-content: center;
+	text-align: center;
+	margin: 2rem;
+}
+.range-slider-wrapper p {
+	font-size: 2rem;
+	font-weight: bolder;
+}
+.range-slider {
+	-webkit-appearance: none;  /* Override default CSS styles */
+	appearance: none;
+	width: 80dvw; /* Full-width */
+	height: 10px; /* Specified height */
+	outline: none; /* Remove outline */
+	opacity: 0.4; /* Set transparency (for mouse-over effects on hover) */
+	-webkit-transition: .2s; /* 0.2 seconds transition on hover */
+	transition: opacity .2s;
+	background: linear-gradient(135deg, #2950ffcc, #d804bccc);
+	margin: 2rem;
+	border-radius: 10px;
+}
+.range-slider::-webkit-slider-thumb {
+	-webkit-appearance: none; /* Override default look */
+	appearance: none;
+	width: 25px; /* Set a specific slider handle width */
+	height: 25px; /* Slider handle height */
+	background: linear-gradient(135deg, #e6ecff, #ffe6f7);
+	cursor: pointer; /* Cursor on hover */
+  }
+  
+  .range-slider::-moz-range-thumb {
+	width: 25px; /* Set a specific slider handle width */
+	height: 25px; /* Slider handle height */
+	background: linear-gradient(135deg, #e6ecff, #ffe6f7);
+	cursor: pointer; /* Cursor on hover */
+  }
+
+#letter-wheel {
+	outline: 1px solid red;
+}
+
+#letter-wheel-wrapper {
+	display: grid;
+	grid-auto-flow: column;
+}
+
+#letter-wheel-wrapper>h2 {
+	font-size: 15rem;
+}
+
+#letter-wheel-container {
+	display: flex;
+	overflow-x: scroll;
+	scroll-snap-type: x mandatory;
+	-webkit-overflow-scrolling: touch;
+	perspective: 1000px;
+	height: 300px;
+	position: relative;
+	padding: 0 20px;
+	background-blend-mode: soft-light;
+	overflow-x: auto;
+	scrollbar-width: none; /* Firefox */
+}
+	#letter-wheel-container::-webkit-scrollbar {
+	display: none; /* Chrome, Safari */
+  }
+
+.box {
+	will-change: transform;
+	flex: 0 0 calc((100% - 40px) / 3);
+	/* 3 boxar med padding */
+	margin: 0 10px;
+	height: 300px;
+	width: 300px;
+	font-weight: bolder;
+	font-size: 15rem;
+	scroll-snap-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transform-style: preserve-3d;
+	transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.ghost-box {
+	flex: 0 0 calc((100% - 40px) / 3);
+	/* 3 boxar med padding */
+	margin: 0 10px;
+	height: 300px;
+}
+
+#letter-wheel-container::-webkit-scrollbar {
+	display: none;
+}
+
+.box:last-child {
+	margin-right: 0;
+	font-size: 10rem;
+}
+
+#letter-wheel-container .box:nth-child(2) h2 {
+	font-size: 3rem;
+	/* Större font-size för den i mitten */
+}
+
+/* Vid scrollning ska alla boxar se större ut när de är i mitten */
+#letter-wheel-container .box:nth-child(1) h2,
+#letter-wheel-container .box:nth-child(3) h2 {
+	font-size: 1.5rem;
+	/* Mindre font-size för boxarna på sidorna */
+}
+
+@media (max-width: 768px) {
+	.box {
+		flex: 0 0 calc((100% - 5px) / 2);
+		/* 2 boxar på mindre skärm */
+	}
+}
+
+@media (max-width: 480px) {
+	.box {
+		flex: 0 0 100%;
+		/* 1 box på mobil */
+	}
+}
+
+
+#letter-wheel-container::before {
+	left: 0;
+	background: linear-gradient(to right, white, transparent);
+}
+
+#letter-wheel-container::after {
+	right: 0;
+	background: linear-gradient(to left, white, transparent);
+}
