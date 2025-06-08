@@ -155,10 +155,9 @@ namespace NameSpace.Controllers
 
             return Ok(new { message = "User is logged in" });
         }
-
         [Authorize]
-        [HttpPost("add-partner")]
-        public async Task<IActionResult> AddPartner([FromBody] string partner)
+        [HttpPost("request-partner")]
+        public async Task<IActionResult> RequestPartner([FromBody] string partner)
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
@@ -170,26 +169,22 @@ namespace NameSpace.Controllers
             {
                 return NotFound("Could not find a partner with that name or email");
             }
-            var newPartner = new ConfirmPartner
+            var newPartner = new PartnerRequest
             {
-                Id = new Guid(),
-                Token = new Guid(),
+                Id = Guid.NewGuid(),
                 RequestingUserId = currentUser.Id,
                 RecivingUserId = partnerToAdd.Id
             };
-            var email = _emailProvider.TemplatePartnerRequest(currentUser, partnerToAdd, newPartner.Token);
-            if (email == null)
-            {
-                return StatusCode(500, "Kunde inte skicka mailet");
-            }
-            await _emailProvider.SendEmailAsync(email.SendTo, email.Subject, email.Body);
+
+            _context.PartnerRequests.Add(newPartner);
+            await _context.SaveChangesAsync();
 
             return Ok();
         }
-        [HttpPost("confirm-partner")]
-        public async Task<IActionResult> ConfirmPartner([FromQuery] Guid token)
+        [HttpPost("add-partner")]
+        public async Task<IActionResult> ConfirmPartner([FromQuery] Guid partnerRequestId)
         {
-            var partnerRequest = _context.ConfirmPartner.FirstOrDefault(p => p.Token == token);
+            var partnerRequest = _context.PartnerRequests.FirstOrDefault(p => p.Id == partnerRequestId);
 
             if (partnerRequest == null)
             {
@@ -209,11 +204,55 @@ namespace NameSpace.Controllers
             await _userManager.UpdateAsync(requestingUser);
             await _userManager.UpdateAsync(recivingUser);
 
-            _context.ConfirmPartner.Remove(partnerRequest);
+            _context.PartnerRequests.Remove(partnerRequest);
             _context.SaveChanges();
 
-
             return Ok();
+        }
+        [Authorize]
+        [HttpGet("partner-requests")]
+        public async Task<IActionResult> GetPartnerRequests()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Unauthorized();
+            }
+            
+            var myPartner = _context.Users.FirstOrDefault(u => u.Id == currentUser.PartnerUserId);
+
+            var MyPartnerRequests = _context.PartnerRequests.Where(p => p.RequestingUserId == currentUser.Id)
+                .Select(u => new PartnerRequestSimple 
+                { 
+                    Id = u.Id,
+                    UserId = u.RecivingUserId
+                })
+                .ToList();
+
+            var PartnerRequests = _context.PartnerRequests.Where(p => p.RecivingUserId == currentUser.Id)
+                .Select(u => new PartnerRequestSimple
+            {
+                Id = u.Id,
+                UserId = u.RequestingUserId
+                })
+                .ToList();
+            var result = new PartnerRequestsDto
+            {
+                CurrentPartner = myPartner?.UserName,
+                MyPartnerRequests = MyPartnerRequests,
+                PartnerRequests = PartnerRequests,
+
+            };
+            return Ok(result);
+        }
+        [Authorize]
+        [HttpDelete("partner-request")]
+        public void DeletePartnerRequest([FromQuery] Guid requestId)
+        {
+            _context.PartnerRequests.Remove(
+                _context.PartnerRequests.First(p => p.Id == requestId)
+            );
+            _context.SaveChangesAsync();
         }
     }
 }
