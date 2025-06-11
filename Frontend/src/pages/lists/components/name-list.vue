@@ -14,6 +14,7 @@
 <script setup lang="ts">
 import NameListItem from './name-list-item.vue';
 import { reactive } from 'vue'
+import type {ReactionObject} from '@scripts/state.ts';
 type NameObject = {
     name: string;
     count: number;
@@ -21,7 +22,7 @@ type NameObject = {
     partnerReaction: number //should also be enum
 }
 defineProps<{
-    list: NameObject[]
+    list: ReactionObject[]
 }>();
 const swipeItem = reactive({
     currentElement: null as HTMLElement | null,
