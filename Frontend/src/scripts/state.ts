@@ -43,30 +43,7 @@ export const state = reactive({
   errorMessage: null as string | null,
 });
 
-export type ReactionObject = {
-  nameInfoId: number,
-  name: string,
-  description: string,
- count: number,
-  gender: number,
-  partnerReaction: number
-}
-export const lists = reactive({
-  favorites: [] as ReactionObject[],
-  liked: [] as ReactionObject[],
-  disliked: [] as ReactionObject[],
-  hasFetched: {
-    favorites: false,
-    liked: false,
-    disliked: false,
-  }
-});
-const styleDeafult = {
-  rotation: 0,
-  scale: 1,
-  opacity: 1,
-}
-export type nameInfo = {
+export type NameInfo = {
   nameInfoId: number,
   name: string,
   count: number
@@ -74,12 +51,23 @@ export type nameInfo = {
   partnerReaction: number | null
   gender: number
 }
+export const lists = reactive({
+  favorites: [] as NameInfo[],
+  liked: [] as NameInfo[],
+  disliked: [] as NameInfo[],
+  hasFetched: {
+    favorites: false,
+    liked: false,
+    disliked: false,
+  }
+});
+// move to card/tinder
 export const nameplate = reactive({
-  names: [] as nameInfo[],
+  names: [] as NameInfo[],
   currentIndex: 0,
   nextIndex: 0,
   rotation: 0,
   scale: 1,
-  opacity: styleDeafult.opacity,
+  opacity: 1,
   nextCardOpacity: 0,
 });
