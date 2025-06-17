@@ -30,9 +30,9 @@
 </template>
 
 <script setup lang="ts">
-import type  {nameInfo} from '../../../scripts/state.ts';
+import type  {NameInfo} from '../../../scripts/state.ts';
 defineProps<{
-    nameInfo: nameInfo
+    nameInfo: NameInfo
     key: string
     styleObject?: Record<string, any> | null
 }>();

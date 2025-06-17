@@ -83,7 +83,6 @@ const handleSwipe = (event: TouchEvent) => {
     resetStylingParams();
   }
 };
-
 const getDirection = () => {
   const { startX, startY, offsetX, offsetY, EDGE_THRESHOLD } = position;
   const absX = Math.abs(offsetX);
@@ -111,7 +110,6 @@ const getDirection = () => {
 
   return null;
 };
-
 const reachesThreshold = () => {
   const absX = Math.abs(position.offsetX);
   const absY = Math.abs(position.offsetY);
@@ -120,7 +118,6 @@ const reachesThreshold = () => {
   const passedThreshold = passedX || passedY;
   return passedThreshold;
 };
-
 const triggerSwipe = async (direction: string) => {
 
   //console.log('TouchEvent:', direction, 'NamesLeft:', nameplate.names);
@@ -215,4 +212,5 @@ const resetStylingParams = () => {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+</style>
