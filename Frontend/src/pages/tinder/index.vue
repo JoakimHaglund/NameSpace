@@ -1,27 +1,40 @@
 <template>
-  <div id="card-wrapper" @touchstart.capture.prevent="handleSwipe" @touchmove.capture.prevent="handleSwipe"
-    @touchend.capture="handleSwipe">
-    <div class="stack-wrapper">
-      <NameplateCard :nameInfo="nameplate.names[nameplate.nextIndex]" :key="'old-' + nameplate.nextIndex"
-        :style="nextCardStyle">
-      </NameplateCard>
-      <NameplateCard :nameInfo="nameplate.names[nameplate.currentIndex]" :key="'current-' + nameplate.currentIndex"
-        :style="currentCardStyle">
-      </NameplateCard>
+  <template v-if="!dataIsReady">
+    <Spinner />
+  </template>
+  <template v-else>
+    <div id="card-wrapper" @touchstart.capture.prevent="handleSwipe" @touchmove.capture.prevent="handleSwipe"
+      @touchend.capture="handleSwipe" @mousedown.capture.prevent="handleMouse" @mousemove.capture.prevent="handleMouse"
+      @mouseup.capture="handleMouse">
+      <div class="stack-wrapper">
+        <NameplateCard :nameInfo="nameplate.names[nameplate.nextIndex]" :key="'old-' + nameplate.nextIndex"
+          :style="nextCardStyle">
+        </NameplateCard>
+        <NameplateCard :nameInfo="nameplate.names[nameplate.currentIndex]" :key="'current-' + nameplate.currentIndex"
+          :style="currentCardStyle">
+        </NameplateCard>
+      </div>
     </div>
-  </div>
+  </template>
 
 </template>
 
 <script setup lang="ts">
+import Spinner from '@/components/spinner.vue';
 import NameplateCard from './components/NameplateCard.vue';
 import { state, Reaction, nameQuery, nameplate } from '@scripts/state.ts';
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router'
 import * as api from '@scripts/api.ts';
 
-import { useSwipe, SwipeDirection,} from '@/scripts/useSwipe';
+import { useSwipe, SwipeDirection, } from '@/scripts/useSwipe';
 import type { Position } from '@/scripts/useSwipe';
+const dataIsReady = ref(false)
+onMounted(async () => {
+  console.log('Componenten laddades in, walla kör din logik här');
+  await fetchData();
+  dataIsReady.value = true;
+});
 
 const router = useRouter();
 
@@ -31,7 +44,7 @@ const styleDeafult = {
   opacity: 1,
 }
 const currentCardStyle = computed(() => {
-  console.log('should:',shouldApplyOffsets.value,'X:', SwipePosition.offsetX, 'Y:',SwipePosition.offsetY, 'rot:' ,nameplate.rotation)
+  console.log('should:', shouldApplyOffsets.value, 'X:', SwipePosition.offsetX, 'Y:', SwipePosition.offsetY, 'rot:', nameplate.rotation)
   if (!shouldApplyOffsets.value) return null;
   return {
     transform: `
@@ -51,7 +64,25 @@ const nextCardStyle = computed(() => {
   return { opacity: nameplate.nextCardOpacity }
 
 });
+//fetchdata should be done on card page load not here
+const fetchData = async (isStartRequest = true) => {
+  const letter = nameQuery.letters[nameQuery.currentIndex]
+  try {
+    const response = await api.getNamesByLetter(letter, nameQuery.pagenum, nameQuery.minCount); // Byt ut med din API-URL
+    if (isStartRequest) {
+      nameplate.names = [...response]
+    } else {
 
+      nameplate.names.push(...response);
+    }
+    console.log("HERE: ", nameplate.names); // Sätt datan i din names array
+
+    //move to card page
+    router.push('/card');
+  } catch (error) {
+    console.error('API-anropet misslyckades:', error);
+  }
+};
 const triggerSwipe = async (direction: SwipeDirection) => {
 
   //console.log('TouchEvent:', direction, 'NamesLeft:', nameplate.names);
@@ -123,7 +154,7 @@ const onEndWrapper = (direction: SwipeDirection | null) => {
   });
 };
 
-const setStylingParams = (position: Position ) => {
+const setStylingParams = (position: Position) => {
   nameplate.rotation = position.offsetX * 0.01;
   //console.log(nameplate, nameplate.rotation);
   nameplate.scale = 1 - Math.min(Math.abs(position.offsetX + position.offsetY), 200) / 1000;
@@ -140,18 +171,18 @@ const resetStylingParams = () => {
   //console.log('opacity value RESET:', nameplate.nextCardOpacity)
 };
 const preCheckValues = () => {
-          if (nameplate.names.length === 0 || nameplate.names[nameplate.currentIndex] === undefined) {
-            console.warn("Ingen data i names ännu eller fel index.");
-            return;
-        }
-        if (nameplate.currentIndex < nameplate.names.length - 1) {
-            nameplate.nextIndex = nameplate.currentIndex + 1;
-        } else {
-            nameplate.nextIndex = 0;
-        }
+  if (nameplate.names.length === 0 || nameplate.names[nameplate.currentIndex] === undefined) {
+    console.warn("Ingen data i names ännu eller fel index.");
+    return;
+  }
+  if (nameplate.currentIndex < nameplate.names.length - 1) {
+    nameplate.nextIndex = nameplate.currentIndex + 1;
+  } else {
+    nameplate.nextIndex = 0;
+  }
 }
 const position = computed(() => SwipePosition)
-const { handleSwipe, CurrentSwipeDirection , SwipePosition } = useSwipe({
+const { handleMouse, handleSwipe, CurrentSwipeDirection, SwipePosition } = useSwipe({
   beforeStart: preCheckValues,
   onUpdate: setStylingParams,
   onEnd: onEndWrapper,
