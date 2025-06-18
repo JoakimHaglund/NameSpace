@@ -27,8 +27,7 @@ export const nameQuery = reactive({
   ],
   currentIndex: 0,
   pagenum: 1,
-  minCount: null,
-  MaxCount: null,
+  minCount: 0,
 });
 export const state = reactive({
   isCheckingLogin: true,

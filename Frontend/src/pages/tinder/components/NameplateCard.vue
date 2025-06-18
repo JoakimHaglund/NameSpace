@@ -8,25 +8,6 @@
             <p>{{ nameInfo.count }}</p>
         </div>
     </transition>
-
-    <!-- Nuvarande kortet, fades in 
-    <transition name="nameplate-fade">
-        <div v-if="nameplate.names[nameplate.currentIndex]" class="nameplate nameplate-current"
-            :class="getGenderClass(nameplate.names[nameplate.currentIndex]?.gender)"
-            :key="'current-' + nameplate.currentIndex" @touchstart="handleSwipe" @touchmove="handleSwipe"
-            @touchend="handleSwipe" :style="shouldApplyOffsets ? {
-                transform: 'translate(' + position.offsetX + 'px, ' + position.offsetY + 'px)' +
-                    ' rotate(' + nameplate.rotation + 'deg)' +
-                    ' scale(' + nameplate.scale + ')',
-                opacity: nameplate.opacity
-            } : null">
-            <h1>{{ nameplate.names[nameplate.currentIndex].name }}</h1>
-            <p>{{ nameplate.names[nameplate.currentIndex].descriptionOfName }}</p>
-            <p>{{ nameplate.names[nameplate.currentIndex].count }}</p>
-            <p v-if="nameplate.names[nameplate.currentIndex].partnerReaction">
-                {{ nameplate.names[nameplate.currentIndex].partnerReaction }}</p>
-        </div>
-    </transition>-->
 </template>
 
 <script setup lang="ts">
@@ -44,4 +25,58 @@ defineProps<{
       return `gender-${genderMap[genderInt] || 'unknown'}`;
     };
 </script>
-<style scoped></style>
+<style scoped>
+.nameplate {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	padding: 2rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+	border-radius: 1rem;
+	text-align: center;
+	word-break: break-word;
+	overflow-wrap: break-word;
+	white-space: normal;
+}
+
+.nameplate-fade-enter-active,
+.nameplate-fade-leave-active {
+	transition: opacity 0.4s ease, transform 0.4s ease;
+	width: 80vw;
+	height: 80vh;
+}
+
+.nameplate h3,
+.nameplate p {
+	max-width: 100%;
+	word-break: break-word;
+	overflow-wrap: break-word;
+	white-space: normal;
+}
+
+.nameplate-fade-enter-from {
+	opacity: 0;
+	transform: scale(0.9);
+}
+
+.nameplate-fade-enter-to {
+	opacity: 1;
+	transform: scale(1);
+}
+
+.nameplate-fade-leave-from {
+	opacity: 1;
+	transform: scale(1);
+}
+
+.nameplate-fade-leave-to {
+	opacity: 0;
+	transform: scale(1.1);
+}
+</style>

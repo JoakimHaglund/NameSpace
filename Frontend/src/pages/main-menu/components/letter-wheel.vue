@@ -9,7 +9,7 @@
             <div id="letter-wheel-container" ref="scrollContainer" @scroll="onScroll">
                 <div class="ghost-box"></div>
                 <div class="box gradiant-text" v-for="(item, index) in nameQuery.letters" :key="index"
-                    :style="getTransform()" @click="fetchData(index, nameQuery.pagenum, true, sliderValue)">
+                    :style="getTransform()" @click="goToCardPage(index, sliderValue)">
 
                     {{ item }}
 
@@ -30,26 +30,13 @@ const router = useRouter();
 const scrollContainer = ref<HTMLElement | null>(null);
 const sliderValue = ref(50)
 
-//fetchdata should be done on card page load not here
-const fetchData = async (index: number, pagenum: number, isStartRequest = false, sliderValue: number) => {
+const goToCardPage = async (index: number,  sliderValue: number) => {
     nameQuery.currentIndex = index;
-    const letter = nameQuery.letters[nameQuery.currentIndex]
-    console.log('index', index, nameQuery.currentIndex, 'letter', nameQuery.letters[nameQuery.currentIndex], letter)
-    //letter = letter === '?' ? nameQuery.letters[Math.floor(Math.random() * 29) + 1] : letter;
-    try {
-        const response = await getNamesByLetter(letter, pagenum, sliderValue); // Byt ut med din API-URL
-        if (isStartRequest) {
-            nameplate.names = [...response]
-        } else {
+    nameQuery.minCount = sliderValue
 
-            nameplate.names.push(...response);
-        }
-        console.log("HERE: ", nameplate.names); // Sätt datan i din names array
-        state.display = Display.CARD;
-        router.push('/card'); 
-    } catch (error) {
-        console.error('API-anropet misslyckades:', error);
-    }
+    //move to card page
+    router.push('/card'); 
+
 };
 
 const getTransform = () => {

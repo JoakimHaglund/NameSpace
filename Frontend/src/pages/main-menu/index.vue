@@ -1,6 +1,6 @@
 <template>
     <p>menu</p>
-    <div id="letter-wheel" v-if="state.isLoggedIn && state.display === Display.MENU">
+    <div id="letter-wheel" v-if="state.isLoggedIn">
         <button @click="logout">Logga ut</button>
         <Nav></Nav>
         <RouterView />
@@ -17,7 +17,6 @@ import { state, Display, SubMenu } from '@scripts/state.ts'
 import { logout } from '@scripts/api.ts'
 
 const resetDisplay = () => {
-    state.display = Display.CARD;
     console.log('clicked button')
 };
 
