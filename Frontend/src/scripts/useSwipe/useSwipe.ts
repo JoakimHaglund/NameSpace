@@ -7,8 +7,7 @@ export function useSwipe(options: {
     onUpdate?: (pos: helper.Position) => void;
     onEnd?: (direction: helper.SwipeDirection | null) => void;
     onEndReset?: () => void;
-    })
-    {
+}) {
 
     const direction = ref<helper.SwipeDirection | null>(null);
     const handleSwipe = (event: TouchEvent) => {
@@ -36,6 +35,32 @@ export function useSwipe(options: {
             options.onEndReset?.();
         }
     };
-    return {handleSwipe, CurrentSwipeDirection: direction, SwipePosition: helper.position}
+    
+    let isMouseDown = false;
+    const handleMouse = (event: MouseEvent) => {
+         if (event.type === 'mousedown') isMouseDown = true;
+         if (event.type === 'mouseup') isMouseDown = false;
+         if (event.type === 'mousemove' && !isMouseDown) return;
+
+        const fakeTouch = {
+            clientX: event.clientX,
+            clientY: event.clientY
+        };
+
+        // Mocka touch-event för din swipe-logik
+        const fakeEvent = {
+            type: event.type === 'mousedown' ? 'touchstart'
+                : event.type === 'mousemove' ? 'touchmove'
+                : 'touchend',
+            preventDefault: () => { },
+            touches: [fakeTouch],
+            changedTouches: [fakeTouch],
+        } as unknown as TouchEvent;
+
+        handleSwipe(fakeEvent); // Använd samma som för touch
+    };
+
+
+    return {handleMouse, handleSwipe, CurrentSwipeDirection: direction, SwipePosition: helper.position }
 }
 
