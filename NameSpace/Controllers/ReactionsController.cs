@@ -100,15 +100,21 @@ namespace NameSpace.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized("User not found");
 
-            var reactionsToAdd = new List<UserReaction>();
-            foreach (var reaction in reactions)
-            {
-                reactionsToAdd.Add(new UserReaction
+            var existingReactions = await _context.UserReactions
+                .Where(u => u.UserId == userId)
+                .Select(r => r.NameInfoId)
+                .ToListAsync();
+
+            var reactionsToAdd = reactions.Where(r => !existingReactions.Contains(r.NameInfoId))
+                .Select(r => new UserReaction
                 {
                     UserId = userId,
-                    NameInfoId = reaction.NameInfoId,
-                    Reaction = (ReactionType)reaction.Reaction,
-                });
+                    NameInfoId = r.NameInfoId,
+                    Reaction = (ReactionType)r.Reaction
+                }).ToList();
+            if (!reactionsToAdd.Any())
+            {
+                return Ok("No reactions to add");
             }
             try
             {
@@ -117,9 +123,9 @@ namespace NameSpace.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest("Whalla det small: " + ex.Message);
+                return BadRequest("Error while adding reactions: " + ex.Message);
             }
-            return Ok("reactions added");
+            return Ok("Reactions added");
         }
 
 
