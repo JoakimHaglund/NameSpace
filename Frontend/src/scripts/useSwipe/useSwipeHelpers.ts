@@ -23,7 +23,7 @@ export const position = reactive<Position>({
     startX: 0,
     offsetY: 0,
     startY: 0,
-    EDGE_THRESHOLD: 120,
+    EDGE_THRESHOLD: 0.09,
     SWIPE_THRESHOLD: 200,
 });
 
@@ -31,14 +31,16 @@ export const getDirection = () => {
     const { startX, startY, offsetX, offsetY, EDGE_THRESHOLD } = position;
     const absX = Math.abs(offsetX);
     const absY = Math.abs(offsetY);
+    const widthThreshold = window.innerWidth * EDGE_THRESHOLD;
+    const heightThreshold = window.innerHeight * EDGE_THRESHOLD;
 
     const isHorizontal = absX > absY;
+console.log('width:', widthThreshold, '/',window.innerWidth ,'height', heightThreshold, '/',window.innerHeight )
+    const xEdgeLeft = startX <= widthThreshold;
+    const xEdgeRight = startX >= window.innerWidth - widthThreshold;
 
-    const xEdgeLeft = startX <= EDGE_THRESHOLD;
-    const xEdgeRight = startX >= window.innerWidth - EDGE_THRESHOLD;
-
-    const yEdgeTop = startY <= EDGE_THRESHOLD;
-    const yEdgeBottom = startY >= window.innerHeight - EDGE_THRESHOLD;
+    const yEdgeTop = startY <= heightThreshold;
+    const yEdgeBottom = startY >= window.innerHeight - heightThreshold;
 
     if (isHorizontal) {
         if (offsetX < 0) return xEdgeRight ? SwipeDirection.FROM_RIGHT : SwipeDirection.LEFT;
