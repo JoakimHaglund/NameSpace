@@ -23,8 +23,8 @@
 import Spinner from '@/components/spinner.vue';
 import NameplateCard from './components/NameplateCard.vue';
 import { state, Reaction, nameQuery, nameplate } from '@scripts/state.ts';
-import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router'
+import { computed, ref, onMounted } from 'vue';
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import * as api from '@scripts/api.ts';
 
 import { useSwipe, SwipeDirection, } from '@/scripts/useSwipe';
@@ -32,9 +32,14 @@ import type { Position } from '@/scripts/useSwipe';
 const dataIsReady = ref(false)
 onMounted(async () => {
   console.log('Componenten laddades in, walla kör din logik här');
-  await fetchData();
+  await fetchData(false);
   dataIsReady.value = true;
 });
+onBeforeRouteLeave(async () => {
+  console.log('LEAVING PAGE')
+  await api.postReactions();
+  nameplate.names = [];
+})
 
 const router = useRouter();
 
@@ -44,7 +49,6 @@ const styleDeafult = {
   opacity: 1,
 }
 const currentCardStyle = computed(() => {
-  console.log('should:', shouldApplyOffsets.value, 'X:', SwipePosition.offsetX, 'Y:', SwipePosition.offsetY, 'rot:', nameplate.rotation)
   if (!shouldApplyOffsets.value) return null;
   return {
     transform: `
@@ -68,14 +72,14 @@ const nextCardStyle = computed(() => {
 const fetchData = async (isStartRequest = true) => {
   const letter = nameQuery.letters[nameQuery.currentIndex]
   try {
+    console.log('MINCOUNT:',nameQuery.minCount)
     const response = await api.getNamesByLetter(letter, nameQuery.pagenum, nameQuery.minCount); // Byt ut med din API-URL
     if (isStartRequest) {
       nameplate.names = [...response]
     } else {
-
       nameplate.names.push(...response);
     }
-    console.log("HERE: ", nameplate.names); // Sätt datan i din names array
+    console.log("HERE: ", nameplate.names, response); // Sätt datan i din names array
 
     //move to card page
     router.push('/card');
@@ -84,18 +88,13 @@ const fetchData = async (isStartRequest = true) => {
   }
 };
 const triggerSwipe = async (direction: SwipeDirection) => {
-
-  //console.log('TouchEvent:', direction, 'NamesLeft:', nameplate.names);
-  if (direction.includes('from')) {
-    await api.postReactions();
-  }
+  const nameInfoId = nameplate.names[nameplate.currentIndex].nameInfoId
   switch (direction) {
     case 'from-up':
-      api.fetchReactions(Reaction.FAVORITE)
       router.push({ name: 'list', params: { list: 'favorites' } })
       break;
     case 'up':
-      addReaction(nameplate.names[nameplate.currentIndex].nameInfoId, Reaction.FAVORITE);
+      addReaction(nameInfoId, Reaction.FAVORITE);
       break;
     case 'from-down':
       router.push('/menu');
@@ -103,30 +102,26 @@ const triggerSwipe = async (direction: SwipeDirection) => {
     case 'down':
       break;
     case 'from-left':
-      api.fetchReactions(Reaction.DISLIKE)
       router.push({ name: 'list', params: { list: 'disliked' } })
       break;
     case 'left':
-      addReaction(nameplate.names[nameplate.currentIndex].nameInfoId, Reaction.DISLIKE);
+      addReaction(nameInfoId, Reaction.DISLIKE);
       break;
     case 'from-right':
-      api.fetchReactions(Reaction.LIKE)
       router.push({ name: 'list', params: { list: 'liked' } })
       break;
     case 'right':
-      addReaction(nameplate.names[nameplate.currentIndex].nameInfoId, Reaction.LIKE);
+      addReaction(nameInfoId, Reaction.LIKE);
       break;
   }
 
   if (!direction.includes('from')) {
     nameplate.names.shift();
-    if (nameplate.names.length < 2) {
+    if (nameplate.names.length <= 2) {
       nameQuery.pagenum++;
-      console.log(nameQuery)
-      api.postReactions();
-      console.log('wtf', nameQuery.letters[nameQuery.currentIndex])
-      const data = await api.getNamesByLetter(nameQuery.letters[nameQuery.currentIndex], nameQuery.pagenum);
-      nameplate.names = [...data]
+      await api.postReactions();
+      await fetchData(false);
+
     }
     console.log(nameplate.names)
     if (nameplate.names.length > 1) {
