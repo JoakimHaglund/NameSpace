@@ -13,7 +13,7 @@ defineProps<{
     name: string;
     count: number;
     gender: number; //should change to enum 
-    partnerReaction: number //should also be enum
+    partnerReaction: number | null//should also be enum
 }>();
 const svgFileLocations = reactive({
       gender: {
