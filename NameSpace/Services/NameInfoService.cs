@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using NameSpace.Dtos;
 using NameSpace.Models;
-using System;
-using System.Security.Claims;
+
 
 namespace NameSpace.Services
 {
@@ -18,11 +16,11 @@ namespace NameSpace.Services
         }
         public async Task<List<NameInfoDto>?> GetUnreactedByLetter(NameQueryDto nameQueryDto, string? userId)
         {
-            // Validera att pageSize är mellan 50 och 100, om inte ge en default på 50
             if (nameQueryDto.PageSize < 1)
             {
-                nameQueryDto.PageSize = 1; // Kan du ändra till 100 om du tycker det
+                nameQueryDto.PageSize = 1;
             }
+
             var user = await _context.Users.Include(u => u.UserReactions).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null) return null;
 
@@ -33,16 +31,29 @@ namespace NameSpace.Services
 
             if(nameQueryDto.Letter == '?')
             {
-                var random = new Random();
                 query = query.OrderBy(x => Guid.NewGuid());
-
             }
             else
             {
-                query = _context.NameInfos
-                    .Where(n => n.Name.StartsWith(nameQueryDto.Letter.ToString().ToUpper()));
+                query = query
+                    .Where(n => n.Name.StartsWith(nameQueryDto.Letter.ToString().ToUpper()))
+                    .OrderBy(n => n.Name);
             }
 
+            query = FilterByNameCount(query, nameQueryDto);
+            var nameInfo = GetPage(query, nameQueryDto.PageNumber, nameQueryDto.PageSize);
+
+            if (nameQueryDto.Letter != '?')
+            {
+                nameInfo = nameInfo.OrderBy(n => n.Name);
+            }
+            var result = ConvertResultToDto(nameInfo, user);
+
+            return result;
+        }
+
+        private IQueryable<NameInfo> FilterByNameCount(IQueryable<NameInfo> query, NameQueryDto nameQueryDto)
+        {
             if (nameQueryDto.MinCount.HasValue)
             {
                 query = query.Where(n => n.Antal >= nameQueryDto.MinCount);
@@ -51,22 +62,23 @@ namespace NameSpace.Services
             {
                 query = query.Where(n => n.Antal >= nameQueryDto.MaxCount);
             }
-
-            var nameInfo = query
-                .Skip((nameQueryDto.PageNumber - 1) * nameQueryDto.PageSize)
-                .Take(nameQueryDto.PageSize);
-            if (nameQueryDto.Letter != '?')
-            {
-                nameInfo = nameInfo.OrderBy(n => n.Name);
-
-            }
+            return query;
+        }
+        private IQueryable<NameInfo> GetPage(IQueryable<NameInfo> query, int pageNumber, int pageSize)
+        {
+            return query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize);
+        }
+        private List<NameInfoDto> ConvertResultToDto(IQueryable<NameInfo> nameInfo, User user)
+        {
             var partnerReactionDict = user.PartnerUser?.UserReactions?.ToDictionary(r => r.NameInfoId, elementSelector: r => r.Reaction)
-                            ?? new Dictionary<Guid, ReactionType>();
+                           ?? new Dictionary<Guid, ReactionType>();
             var result = nameInfo.Select(n => new NameInfoDto
             {
                 NameInfoId = n.Id,
                 Name = n.Name,
-                Antal = n.Antal,
+                Count = n.Antal,
                 DescriptionOfName = n.DescriptionOfName,
                 Gender = (int)n.Gender,
                 PartnerReaction = partnerReactionDict.ContainsKey(n.Id) ? (int)partnerReactionDict[n.Id] : null
@@ -74,6 +86,7 @@ namespace NameSpace.Services
 
             return result;
         }
+
         public async Task<(int Added, int Updated)?> HandleFileUpload(IFormFile file)
         {
             if (file == null || file.Length == 0) return null;
