@@ -19,14 +19,16 @@
 <script setup lang="ts">
 import {state, lists} from '@scripts/state.ts';
 import NameListItem from './components/name-list.vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import {ref, onMounted, reactive} from 'vue';
-import type {ReactionObject} from '@scripts/state.ts';
+import type {NameInfo} from '@scripts/state.ts';
 import * as api from '@scripts/api.ts'
 
-const route = useRoute()
-const listToGet = route.params.list
-const list = ref<ReactionObject[]>([])
+const route = useRoute();
+const router = useRouter();
+
+const listToGet = route.params.list;
+const list = ref<NameInfo[]>([]);
 const hasFetched = ref(false);
 
 onMounted(async () => {
@@ -54,6 +56,7 @@ onMounted(async () => {
 const resetDisplay = () => {
     //rout to card
     console.log('clicked button')
+    router.push('/card'); 
 };
 
 </script>
