@@ -22,10 +22,11 @@
 <script setup lang="ts">
 import Spinner from '@/components/spinner.vue';
 import NameplateCard from './components/NameplateCard.vue';
-import { state, Reaction, nameQuery, nameplate } from '@scripts/state.ts';
+import { state, nameQuery, nameplate } from '@scripts/state.ts';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router'
 import * as api from '@scripts/api.ts';
+import {Reaction, stringifyReactionType} from '@scripts/reactionType.ts';
 
 import { useSwipe, SwipeDirection, } from '@/scripts/useSwipe';
 import type { Position } from '@/scripts/useSwipe';
@@ -56,7 +57,7 @@ const currentCardStyle = computed(() => {
   };
 });
 const shouldApplyOffsets = computed(() => {
-  const dir = CurrentSwipeDirection.value;
+  const dir = CurrentSwipeDirection;
   console.log('dir:', dir, CurrentSwipeDirection)
   return typeof dir === 'string' && !dir.includes('from');
 });
@@ -91,8 +92,7 @@ const triggerSwipe = async (direction: SwipeDirection) => {
   }
   switch (direction) {
     case 'from-up':
-      api.fetchReactions(Reaction.FAVORITE)
-      router.push({ name: 'list', params: { list: 'favorites' } })
+      router.push({ name: 'list', params: { list: stringifyReactionType(Reaction.FAVORITE) } })
       break;
     case 'up':
       addReaction(nameplate.names[nameplate.currentIndex].nameInfoId, Reaction.FAVORITE);
@@ -103,15 +103,13 @@ const triggerSwipe = async (direction: SwipeDirection) => {
     case 'down':
       break;
     case 'from-left':
-      api.fetchReactions(Reaction.DISLIKE)
-      router.push({ name: 'list', params: { list: 'disliked' } })
+      router.push({ name: 'list', params: { list: stringifyReactionType(Reaction.DISLIKE) } })
       break;
     case 'left':
       addReaction(nameplate.names[nameplate.currentIndex].nameInfoId, Reaction.DISLIKE);
       break;
     case 'from-right':
-      api.fetchReactions(Reaction.LIKE)
-      router.push({ name: 'list', params: { list: 'liked' } })
+      router.push({ name: 'list', params: { list: stringifyReactionType(Reaction.LIKE) } })
       break;
     case 'right':
       addReaction(nameplate.names[nameplate.currentIndex].nameInfoId, Reaction.LIKE);
@@ -181,7 +179,6 @@ const preCheckValues = () => {
     nameplate.nextIndex = 0;
   }
 }
-const position = computed(() => SwipePosition)
 const { handleMouse, handleSwipe, CurrentSwipeDirection, SwipePosition } = useSwipe({
   beforeStart: preCheckValues,
   onUpdate: setStylingParams,
