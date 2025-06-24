@@ -1,56 +1,60 @@
 <template>
+  <div>
     <img :src="getGenderIcon(gender)" alt="Gender Icon" width="50px" />
     <h3>{{ name }}</h3>
     <p>{{ count }}</p>
-    <img v-if="partnerReaction != null" :src="getReactionSvg(partnerReaction)" alt="Partner reaction"
+    <img :src="getReactionSvg(partnerReaction)" alt="Partner reaction"
         width="50px" />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { defineProps } from 'vue';
+// Importing
+import femaleSvg from '@svgs/genders/female.svg'
+import maleSvg from '@svgs/genders/male.svg'
+import unknownGenderSvg from '@svgs/genders/unknown.svg'
 
+import favoriteSvg from '@svgs/reactions/favorite.svg'
+import likedSvg from '@svgs/reactions/liked.svg'
+import dislikedSvg from '@svgs/reactions/disliked.svg'
+import noReactionSvg from '@svgs/reactions/no-reaction.svg'
 defineProps<{
     name: string;
     count: number;
     gender: number; //should change to enum 
-    partnerReaction: number | null//should also be enum
+    partnerReaction: number | null //should also be enum
 }>();
-const svgFileLocations = reactive({
-      gender: {
-        female: '../resources/svgs/genders/female.svg',
-        male: '../resources/svgs/genders/male.svg',
-        unknown: '../resources/svgs/genders/unknown.svg',
-      },
-      reaction: {
-        favorite: '../resources/svgs/reactions/favorite.svg',
-        liked: '../resources/svgs/reactions/liked.svg',
-        disliked: '../resources/svgs/reactions/disliked.svg',
-        noReaction: '../resources/svgs/reactions/no-reaction.svg',
-      },
-    });
+
  const getGenderIcon = (genderInt: number) => {
       if (genderInt === 0){
-        return svgFileLocations.gender.female;
+        return femaleSvg;
       }
       else if (genderInt === 1){
-        return svgFileLocations.gender.male;
+        return maleSvg;
       }
       else {
-        return svgFileLocations.gender.unknown;
+        return unknownGenderSvg;
       }
     };
-    const getReactionSvg = (reaction: number) => {
+    const getReactionSvg = (reaction: number | null) => {
       switch (reaction){
         case 2:
-          return svgFileLocations.reaction.favorite;
+          return favoriteSvg;
         case 1: 
-          return svgFileLocations.reaction.liked;
+          return likedSvg;
         case 0: 
-          return svgFileLocations.reaction.disliked;
+          return dislikedSvg;
         default:
-          return undefined;
+          return noReactionSvg;
       }
     }
 </script>
 
-<style scoped></style>
+<style scoped>
+
+h3 {
+	font-size: 3rem;
+	
+}
+</style>
