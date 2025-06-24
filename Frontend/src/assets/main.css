@@ -161,36 +161,7 @@ h1 {
 	}
 }
 
-.list-wrapper {
-	display: grid;
-	justify-content: center;
-	align-content: center;
-	width: 100vw;
-	text-align: center;
-	word-break: break-word;
-	overflow-wrap: break-word;
-	white-space: normal;
-}
 
-.list-item {
-	display: grid;
-	grid-auto-flow: column;
-	grid-template-columns: 0.5fr 3fr 1fr 1fr;
-	gap: 10px;
-	align-items: center;
-	min-width: 80vw;
-	max-width: 95vw;
-	margin: 0.5rem;
-	padding: 2rem;
-	border-radius: 10px;
-	box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);
-	box-shadow: inset 5px 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-.list-item h3 {
-	font-size: 3rem;
-	justify-self: left;
-}
 .range-slider-wrapper {
 	display: grid;
 	grid-row: 1fr 1fr;
