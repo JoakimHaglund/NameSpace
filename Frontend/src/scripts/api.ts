@@ -1,5 +1,7 @@
-import { state, lists, Reaction } from './state.js';
+import { state, lists } from './state.js';
+import { Reaction } from './reactionType.js';
 import axios from 'axios'
+
 const apiClient = axios.create({
     baseURL: 'http://192.168.50.9:5228/api',
     headers: {
@@ -133,6 +135,7 @@ export const fetchReactions = async (reaction: number) => {
             lists.hasFetched.disliked = true;
         }
         console.log(lists)
+        return response.data;
     } catch (error) {
         console.error('API-anropet misslyckades:', error);
     }
