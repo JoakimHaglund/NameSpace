@@ -1,6 +1,6 @@
 <template>
     <div id="" v-if="state.isLoggedIn">
-        <h1 class="gradiant-text" @click="resetDisplay">{{listToGet}}</h1>
+        <h1 class="gradiant-text" @click="resetDisplay">{{title}}</h1>
         <div v-if="list.length === 0 && !hasFetched">
             <div class="spinner"></div>
         </div>
@@ -10,7 +10,7 @@
 
         <!-- När login-statusen är kontrollerad -->
         <div v-else>
-            <NameListItem :list="list"></NameListItem>    
+            <NameListItem :list="list" @remove="handleRemove"></NameListItem>    
         </div>
     </div>
 
@@ -23,33 +23,26 @@ import { useRoute, useRouter } from 'vue-router';
 import {ref, onMounted, reactive} from 'vue';
 import type {NameInfo} from '@scripts/state.ts';
 import * as api from '@scripts/api.ts'
+import type { SwipeDirection } from '@/scripts/useSwipe';
+import { Reaction, parseReactionType, stringifyReactionType  } from '@scripts/reactionType'
+const route = useRoute()
+const router = useRouter()
 
-const route = useRoute();
-const router = useRouter();
 
-const listToGet = route.params.list;
-const list = ref<NameInfo[]>([]);
+const list = ref<NameInfo[]>([])
 const hasFetched = ref(false);
-
+let title = '';
+let reaction: Reaction
 onMounted(async () => {
   try {
-    if(listToGet === "favorites"){
-        await api.fetchReactions(2)
-        list.value = lists.favorites
-        hasFetched.value = lists.hasFetched.favorites
-    }
-    else if (listToGet === "disliked"){
-        await api.fetchReactions(0)
-        list.value = lists.disliked
-        hasFetched.value = lists.hasFetched.disliked
-    }
-    else if (listToGet === "liked"){
-        await api.fetchReactions(1)
-        list.value = lists.liked
-        hasFetched.value = lists.hasFetched.liked
-    }
+    reaction = parseReactionType(route.params.list);
+    title = stringifyReactionType(reaction);
+    list.value = await api.fetchReactions(reaction);
+    hasFetched.value = true
+
+    console.log('Listan hämtad:', list.value, route.params);
   } catch (e) {
-    console.error('Fuck, kunde inte hämta listan', e)
+    console.error('kunde inte hämta listan', e)
   }
 })
 
@@ -58,6 +51,10 @@ const resetDisplay = () => {
     console.log('clicked button')
     router.push('/card'); 
 };
+function handleRemove(id: number, dir: SwipeDirection) {
+    console.log(reaction)
+  list.value = list.value.filter(n => n.nameInfoId !== id)
+}
 
 </script>
 
