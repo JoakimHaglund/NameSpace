@@ -45,11 +45,11 @@ namespace NameSpace.Services
 
             if (nameQueryDto.MinCount.HasValue)
             {
-                query = query.Where(n => n.Antal >= nameQueryDto.MinCount);
+                query = query.Where(n => n.Count >= nameQueryDto.MinCount);
             }
             if (nameQueryDto.MaxCount.HasValue)
             {
-                query = query.Where(n => n.Antal >= nameQueryDto.MaxCount);
+                query = query.Where(n => n.Count >= nameQueryDto.MaxCount);
             }
 
             var nameInfo = query
@@ -66,7 +66,7 @@ namespace NameSpace.Services
             {
                 NameInfoId = n.Id,
                 Name = n.Name,
-                Antal = n.Antal,
+                Antal = n.Count,
                 DescriptionOfName = n.DescriptionOfName,
                 Gender = (int)n.Gender,
                 PartnerReaction = partnerReactionDict.ContainsKey(n.Id) ? (int)partnerReactionDict[n.Id] : null
@@ -95,7 +95,7 @@ namespace NameSpace.Services
                 if (dbDictNameInfos.TryGetValue(namesDto.Name, out var existingNameInfo))
                 {
                     // 🚨 UPDATE
-                    existingNameInfo.Antal += namesDto.Antal;
+                    existingNameInfo.Count += namesDto.Antal;
                     existingNameInfo.DescriptionOfName = namesDto.DescriptionOfName ?? existingNameInfo.DescriptionOfName;
                     existingNameInfo.Gender = (Gender)namesDto.Gender;
 
@@ -107,7 +107,7 @@ namespace NameSpace.Services
                     {
                         Id = new Guid(),
                         Name = namesDto.Name,
-                        Antal = namesDto.Antal,
+                        Count = namesDto.Antal,
                         DescriptionOfName = namesDto.DescriptionOfName,
                         Gender = (Gender)namesDto.Gender
                     });
@@ -138,7 +138,7 @@ namespace NameSpace.Services
             };
             existingNameInfo.Name = nameInfo.Name;
             existingNameInfo.DescriptionOfName = nameInfo.DescriptionOfName;
-            existingNameInfo.Antal = nameInfo.Antal;
+            existingNameInfo.Count = nameInfo.Count;
             existingNameInfo.Gender = nameInfo.Gender;
 
             _context.NameInfos.Update(existingNameInfo);
