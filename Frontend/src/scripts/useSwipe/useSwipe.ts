@@ -22,8 +22,7 @@ export function useSwipe(options: {
         } else if (event.type === "touchmove") {
             helper.setOffsetPos(touch);
             direction.value = helper.getDirection();
-           // console.log('Swipe direction:', direction.value, 'Position:', helper.position.offsetX, helper.position.startX);
-            if (direction.value != null && !direction.value.includes('from')) {
+            if (!direction.value?.includes('from')) {
                 options.onUpdate?.(helper.position)
             }
         } else if (event.type === "touchend") {
@@ -62,6 +61,6 @@ export function useSwipe(options: {
     };
 
 
-    return {handleMouse, handleSwipe, CurrentSwipeDirection: direction.value, SwipePosition: helper.position }
+    return {handleMouse, handleSwipe, CurrentSwipeDirection: direction, SwipePosition: helper.position }
 }
 
