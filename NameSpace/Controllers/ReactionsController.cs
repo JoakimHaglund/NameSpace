@@ -84,7 +84,7 @@ namespace NameSpace.Controllers
             {
                 NameInfoId = n.NameInfoId,
                 Name = n.NameInfo!.Name,
-                Antal = n.NameInfo.Antal,
+                Count = n.NameInfo.Count,
                 Gender = (int)n.NameInfo.Gender,
                 PartnerReaction = partnerReactionDict.ContainsKey(n.NameInfo.Id) ? (int)partnerReactionDict[n.NameInfo.Id] : null
             }).ToList();
@@ -93,7 +93,6 @@ namespace NameSpace.Controllers
             return Ok(result);
         }
 
-        // POST api/<ValuesController>
         [HttpPost("reactions")]
         public async Task<IActionResult> PostReactions([FromBody] List<ReactionDto> reactions)
         {
@@ -122,13 +121,59 @@ namespace NameSpace.Controllers
             return Ok("reactions added");
         }
 
-
-
-
-        // DELETE api/<ValuesController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpPatch]
+        public async Task<IActionResult> UpdateReactions([FromBody] List<ReactionDto> reactionsToUpdate)
         {
+            if (reactionsToUpdate == null || !reactionsToUpdate.Any())
+            {
+                return BadRequest("Inga ändringar hittades");
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId == null) return Unauthorized("User not found");
+            
+            var ids = reactionsToUpdate.Select(n => n.NameInfoId).ToList();
+            var reactions = await _context.UserReactions
+                .Where(n => n.UserId == userId && ids
+                    .Contains(n.NameInfoId))
+                .ToListAsync();
+
+            foreach (var reaction in reactions) 
+            { 
+                var updated = reactionsToUpdate.FirstOrDefault(n => n.NameInfoId == reaction.NameInfoId);
+                if (updated == null) continue;
+
+                if (!Enum.IsDefined(typeof(ReactionType), updated.Reaction)) continue;
+                reaction.Reaction = (ReactionType)updated.Reaction;
+            }
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteRange([FromBody] List<ReactionDto> reactionsToDelete)
+        {
+            if (reactionsToDelete == null || !reactionsToDelete.Any())
+            {
+                return BadRequest("Inga ändringar hittades");
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId == null) return Unauthorized("User not found");
+
+            var ids = reactionsToDelete.Select(n => n.NameInfoId).ToList();
+            var reactions = await _context.UserReactions
+                .Where(n => n.UserId == userId && ids
+                    .Contains(n.NameInfoId))
+                .ToListAsync();
+            if (!reactions.Any()) return NotFound("Inga reaktioner hittades att ta bort");
+
+            _context.RemoveRange(reactions);
+            _context.SaveChanges();
+            return Ok();
         }
     }
 }
