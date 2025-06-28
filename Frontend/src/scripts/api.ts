@@ -1,4 +1,4 @@
-import { state, lists } from './state.js';
+import { state, lists, type NameInfo } from './state.js';
 import { Reaction } from './reactionType.js';
 import axios from 'axios'
 
@@ -150,6 +150,28 @@ export const postReactions = async () => {
         } else {
             state.errorMessage = response.data.message;
         }
+    } catch (error) {
+        console.error('Reaction http error ', error);
+        if (axios.isAxiosError(error)) {
+            return error.response?.data;
+        }
+    }
+};
+export const deleteReactions = async (reactionsToDelete: NameInfo[]) => {
+    try {
+        const response = await apiClient.delete('/reactions', { data: reactionsToDelete});
+        console.log("deleteReactions: ", response);
+    } catch (error) {
+        console.error('Reaction http error ', error);
+        if (axios.isAxiosError(error)) {
+            return error.response?.data;
+        }
+    }
+};
+export const patchReactions = async (reactionsToUpdate: NameInfo[]) => {
+    try {
+        const response = await apiClient.patch('/reactions', reactionsToUpdate);
+        console.log("patchReactions: ", response);
     } catch (error) {
         console.error('Reaction http error ', error);
         if (axios.isAxiosError(error)) {
