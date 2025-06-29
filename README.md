@@ -4,5 +4,5 @@ and use a minimal ui to exclude as much needless buttons as possible and instead
 - **Swipe Actions:**
   - Right: add to liked
   - Left: add to disliked
-  - Up: Add to liked and favorites
+  - Up: Add to favorites
   - Down: skip
