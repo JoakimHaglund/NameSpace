@@ -40,7 +40,7 @@ export function swipeHelpers() {
 
         const yEdgeTop = startY <= EDGE_THRESHOLD;
         const yEdgeBottom = startY >= window.innerHeight - EDGE_THRESHOLD;
-
+      
         if (isHorizontal) {
             if (offsetX < 0) return xEdgeRight ? SwipeDirection.FROM_RIGHT : SwipeDirection.LEFT;
             if (offsetX > 0) return xEdgeLeft ? SwipeDirection.FROM_LEFT : SwipeDirection.RIGHT;
