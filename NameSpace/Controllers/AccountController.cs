@@ -146,10 +146,13 @@ namespace NameSpace.Controllers
             {
                 return Unauthorized("No token found");
             }
-
-            var claims = _tokenProvider.ValidateJwtToken(token); // Verifiera JWT-token
-            if (claims == null)
+            try
             {
+                var claims = _tokenProvider.ValidateJwtToken(token); // Verifiera JWT-token
+            }
+            catch (Exception ex) 
+            { 
+                Console.WriteLine($"{ex.Message}");
                 return Unauthorized("Invalid token");
             }
 

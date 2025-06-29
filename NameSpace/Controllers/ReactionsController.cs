@@ -29,12 +29,6 @@ namespace NameSpace.Controllers
             _context = context;
 
         }
-        // GET: api/<ValuesController>
-        [HttpGet]
-        public async Task<IActionResult> Get()
-        {
-            return Ok();
-        }
 
         // GET api/<ValuesController>/5
         [HttpGet("{id}")]
@@ -47,13 +41,13 @@ namespace NameSpace.Controllers
         [HttpGet("reactions")]
         public async Task<IActionResult> GetReactions([FromQuery] ReactionType reaction)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized("User not found");
 
             var user = await _context.Users
                 .Include(u => u.PartnerUser)
-                .ThenInclude(p => p.UserReactions)
-                .FirstOrDefaultAsync(u => u.Id == User
-                    .FindFirstValue(ClaimTypes.NameIdentifier)
-                    );
+                .ThenInclude(p => p!.UserReactions)
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null) return Unauthorized("User not found");
 

@@ -31,12 +31,7 @@ namespace NameSpace.Controllers
             _fileReader = new FileReader();
             _nameInfoService = nameInfoService;
         }
-        // GET: api/<ValuesController>
-        [HttpGet]
-        public async Task<IActionResult> Get()
-        {
-            return Ok();
-        }
+
 
         // GET api/<ValuesController>/5
         [HttpGet("{id}")]
