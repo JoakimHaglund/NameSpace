@@ -57,7 +57,7 @@ const currentCardStyle = computed(() => {
   };
 });
 const shouldApplyOffsets = computed(() => {
-  const dir = CurrentSwipeDirection;
+  const dir = CurrentSwipeDirection.value;
   console.log('dir:', dir, CurrentSwipeDirection)
   return typeof dir === 'string' && !dir.includes('from');
 });
