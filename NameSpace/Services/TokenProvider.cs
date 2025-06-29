@@ -40,7 +40,12 @@ namespace NameSpace.Services
         {
             try
             {
-                string secretKey = configuration["Jwt:Secret"];
+                string? secretKey = configuration["Jwt:Secret"];
+
+                if (string.IsNullOrWhiteSpace(secretKey))
+                {
+                    throw new InvalidOperationException("JWT secret key is missing from configuration!");
+                }
                 var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
 
                 var tokenHandler = new JwtSecurityTokenHandler();
@@ -65,7 +70,7 @@ namespace NameSpace.Services
             catch (Exception ex)
             {
                 // Om valideringen misslyckas, returnera null eller kasta ett undantag
-                return null;
+                throw new Exception("Failed to validate JWT token with exception: ", ex);
             }
         }
     }
