@@ -78,7 +78,7 @@ namespace NameSpace.Services
             {
                 NameInfoId = n.Id,
                 Name = n.Name,
-                Antal = n.Count,
+                Count = n.Count,
                 DescriptionOfName = n.DescriptionOfName,
                 Gender = (int)n.Gender,
                 PartnerReaction = partnerReactionDict.ContainsKey(n.Id) ? (int)partnerReactionDict[n.Id] : null
