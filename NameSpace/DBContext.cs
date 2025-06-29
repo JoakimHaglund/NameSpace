@@ -12,7 +12,7 @@ namespace NameSpace
         {
         }
 
-        public DbSet<User> Users { get; set; } // Användarnas tabell
+        public override DbSet<User> Users { get; set; } // Användarnas tabell
         public DbSet<NameInfo> NameInfos { get; set; }
         public DbSet<UserReaction> UserReactions { get; set; }
         public DbSet<PartnerRequest> PartnerRequests { get; set; }
