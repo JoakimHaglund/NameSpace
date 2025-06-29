@@ -1,5 +1,7 @@
-import { state, lists, Reaction } from './state.js';
+import { state, lists, type NameInfo } from './state.js';
+import { Reaction } from './reactionType.js';
 import axios from 'axios'
+
 const apiClient = axios.create({
     baseURL: 'http://192.168.50.9:5228/api',
     headers: {
@@ -133,6 +135,7 @@ export const fetchReactions = async (reaction: number) => {
             lists.hasFetched.disliked = true;
         }
         console.log(lists)
+        return response.data;
     } catch (error) {
         console.error('API-anropet misslyckades:', error);
     }
@@ -147,6 +150,28 @@ export const postReactions = async () => {
         } else {
             state.errorMessage = response.data.message;
         }
+    } catch (error) {
+        console.error('Reaction http error ', error);
+        if (axios.isAxiosError(error)) {
+            return error.response?.data;
+        }
+    }
+};
+export const deleteReactions = async (reactionsToDelete: NameInfo[]) => {
+    try {
+        const response = await apiClient.delete('/reactions', { data: reactionsToDelete});
+        console.log("deleteReactions: ", response);
+    } catch (error) {
+        console.error('Reaction http error ', error);
+        if (axios.isAxiosError(error)) {
+            return error.response?.data;
+        }
+    }
+};
+export const patchReactions = async (reactionsToUpdate: NameInfo[]) => {
+    try {
+        const response = await apiClient.patch('/reactions', reactionsToUpdate);
+        console.log("patchReactions: ", response);
     } catch (error) {
         console.error('Reaction http error ', error);
         if (axios.isAxiosError(error)) {

@@ -1,5 +1,4 @@
 <template>
-    <p>login</p>
     <div v-if="!state.isLoggedIn && !state.showRegisterForm">
         <h1 class="gradiant-text">NameSpace</h1>
         <form class="login-form" @submit.prevent="login">

@@ -1,5 +1,4 @@
 <template>
-    <p>menu</p>
     <div id="letter-wheel" v-if="state.isLoggedIn">
         <button @click="logout">Logga ut</button>
         <Nav></Nav>

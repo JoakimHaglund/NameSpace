@@ -22,10 +22,11 @@
 <script setup lang="ts">
 import Spinner from '@/components/spinner.vue';
 import NameplateCard from './components/NameplateCard.vue';
-import { state, Reaction, nameQuery, nameplate } from '@scripts/state.ts';
-import { computed, ref, onMounted } from 'vue';
-import { useRouter, onBeforeRouteLeave } from 'vue-router'
+import { state, nameQuery, nameplate } from '@scripts/state.ts';
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router'
 import * as api from '@scripts/api.ts';
+import {Reaction, stringifyReactionType} from '@scripts/reactionType.ts';
 
 import { useSwipe, SwipeDirection, } from '@/scripts/useSwipe';
 import type { Position } from '@/scripts/useSwipe';
@@ -91,7 +92,7 @@ const triggerSwipe = async (direction: SwipeDirection) => {
   const nameInfoId = nameplate.names[nameplate.currentIndex].nameInfoId
   switch (direction) {
     case 'from-up':
-      router.push({ name: 'list', params: { list: 'favorites' } })
+      router.push({ name: 'list', params: { list: stringifyReactionType(Reaction.FAVORITE) } })
       break;
     case 'up':
       addReaction(nameInfoId, Reaction.FAVORITE);
@@ -102,13 +103,13 @@ const triggerSwipe = async (direction: SwipeDirection) => {
     case 'down':
       break;
     case 'from-left':
-      router.push({ name: 'list', params: { list: 'disliked' } })
+      router.push({ name: 'list', params: { list: stringifyReactionType(Reaction.DISLIKE) } })
       break;
     case 'left':
       addReaction(nameInfoId, Reaction.DISLIKE);
       break;
     case 'from-right':
-      router.push({ name: 'list', params: { list: 'liked' } })
+      router.push({ name: 'list', params: { list: stringifyReactionType(Reaction.LIKE) } })
       break;
     case 'right':
       addReaction(nameInfoId, Reaction.LIKE);
@@ -176,7 +177,6 @@ const preCheckValues = () => {
     nameplate.nextIndex = 0;
   }
 }
-const position = computed(() => SwipePosition)
 const { handleMouse, handleSwipe, CurrentSwipeDirection, SwipePosition } = useSwipe({
   beforeStart: preCheckValues,
   onUpdate: setStylingParams,

@@ -1,15 +1,17 @@
-import { nameplate } from '@scripts/state.ts';
-import * as helper from './useSwipeHelpers.ts';
+import { SwipeDirection, swipeHelpers} from './useSwipeHelpers.ts';
+import type { Position } from './useSwipeHelpers.ts';
 import { ref } from 'vue';
 
 export function useSwipe(options: {
     beforeStart?: () => void;
-    onUpdate?: (pos: helper.Position) => void;
-    onEnd?: (direction: helper.SwipeDirection | null) => void;
+    onUpdate?: (pos: Position) => void;
+    onEnd?: (direction: SwipeDirection | null) => void;
     onEndReset?: () => void;
 }) {
 
-    const direction = ref<helper.SwipeDirection | null>(null);
+    const helper = swipeHelpers();
+    const direction = ref<SwipeDirection | null>(null);
+
     const handleSwipe = (event: TouchEvent) => {
         event.preventDefault();
         options.beforeStart?.();
@@ -20,8 +22,7 @@ export function useSwipe(options: {
         } else if (event.type === "touchmove") {
             helper.setOffsetPos(touch);
             direction.value = helper.getDirection();
-
-            if (direction.value != null && !direction.value.includes('from')) {
+            if (!direction.value?.includes('from')) {
                 options.onUpdate?.(helper.position)
             }
         } else if (event.type === "touchend") {
@@ -47,7 +48,6 @@ export function useSwipe(options: {
             clientY: event.clientY
         };
 
-        // Mocka touch-event för din swipe-logik
         const fakeEvent = {
             type: event.type === 'mousedown' ? 'touchstart'
                 : event.type === 'mousemove' ? 'touchmove'
@@ -57,7 +57,7 @@ export function useSwipe(options: {
             changedTouches: [fakeTouch],
         } as unknown as TouchEvent;
 
-        handleSwipe(fakeEvent); // Använd samma som för touch
+        handleSwipe(fakeEvent);
     };
 
 

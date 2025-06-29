@@ -1,4 +1,5 @@
 import { reactive } from 'vue';
+import { Reaction } from './reactionType';
 
 export enum Display {
   MENU,
@@ -14,11 +15,6 @@ export const SubMenu = Object.freeze({
   SETTINGS: 'settings',
   PARTNER: 'add-partner',
 });
-export enum Reaction {
-  FAVORITE = 2,
-  LIKE = 1,
-  DISLIKE = 0
-};
 export const nameQuery = reactive({
   letters: [
     '?', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
@@ -47,7 +43,7 @@ export type NameInfo = {
   name: string,
   count: number
   descriptionOfName: string,
-  partnerReaction: number | null
+  partnerReaction: number | null,
   gender: number
 }
 export const lists = reactive({
