@@ -89,6 +89,7 @@ namespace NameSpace.Services
 
         public async Task<(int Added, int Updated)?> HandleFileUpload(IFormFile file)
         {
+            _context.ChangeTracker.Clear();
             if (file == null || file.Length == 0) return null;
 
             var namesDtoSet = await _fileReader.ReadCSV(file);
@@ -118,7 +119,7 @@ namespace NameSpace.Services
                 {
                     nameInfosToAdd.Add(new NameInfo
                     {
-                        Id = new Guid(),
+                        Id = Guid.NewGuid(),
                         Name = namesDto.Name,
                         Count = namesDto.Antal,
                         DescriptionOfName = namesDto.DescriptionOfName,
@@ -135,7 +136,21 @@ namespace NameSpace.Services
             {
                 _context.UpdateRange(nameInfosToUpdate);
             }
+            var duplicates = nameInfosToAdd
+            .GroupBy(x => new { x.Name, x.Gender })
+            .Where(g => g.Count() > 1)
+            .ToList();
 
+            if (duplicates.Any())
+            {
+                throw new InvalidOperationException(
+                    $"Dubbletter hittades i NameInfosToAdd: {string.Join(", ", duplicates.Select(d => $"{d.Key.Name} ({d.Key.Gender})"))}"
+                );
+            }
+            
+            var tracked = _context.ChangeTracker.Entries<NameInfo>().ToList();
+            Console.WriteLine($"Tracked count: {tracked.Count}");
+            Console.Write("hello");
             await _context.SaveChangesAsync();
             return (Added: nameInfosToAdd.Count, Updated: nameInfosToUpdate.Count);
 

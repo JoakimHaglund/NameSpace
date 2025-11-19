@@ -24,7 +24,7 @@ import Spinner from '@/components/spinner.vue';
 import NameplateCard from './components/NameplateCard.vue';
 import { state, nameQuery, nameplate } from '@scripts/state.ts';
 import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import * as api from '@scripts/api.ts';
 import {Reaction, stringifyReactionType} from '@scripts/reactionType.ts';
 
@@ -32,12 +32,10 @@ import { useSwipe, SwipeDirection, } from '@/scripts/useSwipe';
 import type { Position } from '@/scripts/useSwipe';
 const dataIsReady = ref(false)
 onMounted(async () => {
-  console.log('Componenten laddades in, walla kör din logik här');
   await fetchData(false);
   dataIsReady.value = true;
 });
 onBeforeRouteLeave(async () => {
-  console.log('LEAVING PAGE')
   await api.postReactions();
   nameplate.names = [];
 })
@@ -62,7 +60,6 @@ const currentCardStyle = computed(() => {
 });
 const shouldApplyOffsets = computed(() => {
   const dir = CurrentSwipeDirection.value;
-  console.log('dir:', dir, CurrentSwipeDirection)
   return typeof dir === 'string' && !dir.includes('from');
 });
 const nextCardStyle = computed(() => {
@@ -73,14 +70,12 @@ const nextCardStyle = computed(() => {
 const fetchData = async (isStartRequest = true) => {
   const letter = nameQuery.letters[nameQuery.currentIndex]
   try {
-    console.log('MINCOUNT:',nameQuery.minCount)
     const response = await api.getNamesByLetter(letter, nameQuery.pagenum, nameQuery.minCount); // Byt ut med din API-URL
     if (isStartRequest) {
       nameplate.names = [...response]
     } else {
       nameplate.names.push(...response);
     }
-    console.log("HERE: ", nameplate.names, response); // Sätt datan i din names array
 
     //move to card page
     router.push('/card');
@@ -152,8 +147,8 @@ const onEndWrapper = (direction: SwipeDirection | null) => {
 
 const setStylingParams = (position: Position) => {
   nameplate.rotation = position.offsetX * 0.01;
-  //console.log(nameplate, nameplate.rotation);
   nameplate.scale = 1 - Math.min(Math.abs(position.offsetX + position.offsetY), 200) / 1000;
+
   //calculate opacity based on how far the card has moved
   nameplate.opacity = styleDeafult.opacity - Math.min(Math.abs(position.offsetX + position.offsetY), 200) / 800;
   const totalOffset = Math.abs(position.offsetX) + Math.abs(position.offsetY);
@@ -164,7 +159,6 @@ const resetStylingParams = () => {
   nameplate.opacity = styleDeafult.opacity;
   nameplate.scale = 1;
   nameplate.nextCardOpacity = 0;
-  //console.log('opacity value RESET:', nameplate.nextCardOpacity)
 };
 const preCheckValues = () => {
   if (nameplate.names.length === 0 || nameplate.names[nameplate.currentIndex] === undefined) {
