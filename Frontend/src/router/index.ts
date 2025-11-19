@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-//import HomeView from '../views/HomeView.vue'
-
+import { checkLoginStatus } from '../scripts/api.ts';
+import {state} from '../scripts/state.ts';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -32,6 +32,14 @@ const router = createRouter({
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       component: () => import('../pages/login/index.vue'),
+    },
+    {
+      path: '/confirm-email',
+      name: 'confirm-email',
+      // route level code-splitting
+      // this generates a separate chunk (About.[hash].js) for this route
+      // which is lazy-loaded when the route is visited.
+      component: () => import('../components/completeRegistration.vue'),
     },
     {
      path: '/menu',
@@ -71,8 +79,33 @@ const router = createRouter({
       // which is lazy-loaded when the route is visited.
       component: () => import('../pages/lists/list.vue'),
       props: true
+
     },
   ],
 })
+router.beforeEach(async (to, from, next) => {
+  if (to.path === '/confirm-email') {
+    return next()
+  }
 
+  if (!state.isCheckingLogin) {
+    state.isCheckingLogin = true
+    try {
+      await checkLoginStatus()
+    } catch (err) {
+      state.isLoggedIn = false
+    } finally {
+      state.isCheckingLogin = false
+    }
+  }
+
+  if (state.isLoggedIn) {
+    return next()
+  }
+  if (to.path !== '/login') {
+    return next('/login')
+  }
+
+  next()
+})
 export default router
