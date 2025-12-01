@@ -47,7 +47,6 @@ builder.Services.AddScoped<NameInfoService>();
 builder.Services.AddSingleton<EmailService>();
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -78,13 +77,12 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// LÄGG TILL CORS POLICYN
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://127.0.0.1:5500", "http://192.168.50.9:5500", "http://localhost:5173") // <-- din frontend-url
+            policy.WithOrigins("http://127.0.0.1:5500", "http://192.168.50.9:5500", "http://localhost:5173") 
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -92,10 +90,10 @@ builder.Services.AddCors(options =>
 });
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
-    serverOptions.ListenAnyIP(5228); // HTTP om du vill ha det också
+    serverOptions.ListenAnyIP(5228); 
     serverOptions.ListenAnyIP(7203, listenOptions =>
     {
-        listenOptions.UseHttps(); // HÄR ÄR DITT HTTPS
+        listenOptions.UseHttps(); 
     });
 });
 
