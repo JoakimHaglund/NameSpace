@@ -112,23 +112,6 @@ namespace NameSpace.Services
                     http://192.168.50.9:5500/confirm-email?token={token}&email={user.Email}"
             };
         }
-        public EmailTemplate? TemplatePartnerRequest(User requestingUser, User recivingUser, Guid token)
-        {
-            if (recivingUser.Email == null)
-            {
-                return null;
-            }
-
-            return new EmailTemplate
-            {
-                SendTo = recivingUser.Email,
-                Subject = $"Partner förfrågan",
-                Body = @$"
-                    {requestingUser.UserName} vill bli din partner på NameSpace!
-                    Klicka på länken nedan för att acceptera.
-                    http://192.168.50.9:5500/index.html?partner-token={token}"
-            };
-        }
         public class EmailTemplate
         {
             public required string SendTo { get; set; }
