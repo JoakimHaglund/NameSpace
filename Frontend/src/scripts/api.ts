@@ -61,17 +61,15 @@ export const loginUser = async (username: string, password: string) => {
     }
 };
 export const completeRegistration = async (token: string, email: string) => {
-    await apiClient.post('/Account/verify-email', { email, token })
-        .then(() => {
-            // kontot är verifierat, redirecta till login eller nåt
-            window.location.replace('http://192.168.50.9:5500/index.html');
-        })
-        .catch((error) => {
-            // token ogiltig eller nåt kefft hände
-            console.error('completeRegistration error ', error);
-            window.location.replace('http://192.168.50.9:5500/index.html');
-            return error.response.data;
-        });
+    try {
+        const response = await apiClient.post('/Account/verify-email', { email, token })
+
+        return response.data
+    }
+    catch(error: any) {
+        console.error('completeRegistration error ', error);
+        return error.response.data;
+    };
 }
 export const registerUser = async (username: string, email: string, password: string) => {
     try {

@@ -61,25 +61,27 @@ namespace NameSpace.Controllers
                 var user = await _userManager.FindByEmailAsync(emailDto.Email);
                 if(user == null)
                 {
-                    return NotFound("Could not find a pending email confirmation");
+                    return NotFound("Användaren kunde inte hittas");
                 }
                 string decodedToken = HttpUtility.UrlDecode(emailDto.Token);
                 var result = await _userManager.ConfirmEmailAsync(user, emailDto.Token);
                 if (!result.Succeeded)
                 {
+                    //might wanna break this out to a new api call/method rather than do this here 
+                    //to be able to limit and have it be a manual thing rather than spam the user each time it fails 
                     var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     var encodedToken = HttpUtility.UrlEncode(token);
                     var email = _emailProvider.TemplateEmailVerification(user, encodedToken);
                     if (email == null)
                     {
-                        return StatusCode(500, "Något gick fel med att skicka email");
+                        return StatusCode(500, "Något gick fel med att skicka e-post");
                     }
                     await _emailProvider.SendEmailAsync(email.SendTo, email.Subject, email.Body);
                     return BadRequest("Ogiltig token!");
                 }
-                user.LockoutEnd = null; // Gittar låset
+                user.LockoutEnd = null;
                 await _userManager.UpdateAsync(user);
-                return Ok(user);
+                return Ok("Registreringen lyckades");
 
             } catch (Exception ex)
             {
