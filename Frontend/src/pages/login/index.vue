@@ -15,7 +15,7 @@
             <input type="text" v-model="username" placeholder="Användarnamn" required />
             <input type="email" v-model="registerEmail" placeholder="E-mail" required />
             <input type="password" v-model="registerPassword" placeholder="Lösenord" required />
-            <input type="password" v-model="confirmPassword" placeholder="Lösenord" required />
+            <input type="password" v-model="confirmPassword" placeholder="Upprepa lösenord" required />
             <div id="register-form-buttons-wrapper">
                 <button type="button" @click.prevent="toggleRegisterForm">Gå tillbaka</button>
                 <button type="submit">Registera</button>
@@ -54,7 +54,7 @@ const login = async () => {
     }
 };
 const register = async () => {
-    if (password.value === confirmPassword.value) {
+    if (registerPassword.value === confirmPassword.value) {
         const response = await api.registerUser(username.value, registerEmail.value, registerPassword.value);
         console.log("Login: ", response);
         if (response.status === 200) {
